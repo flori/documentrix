@@ -8,7 +8,7 @@ GemHadar do
   author      'Florian Frank'
   email       'flori@ping.de'
   homepage    "https://github.com/flori/#{name}"
-  summary     '"Ruby library for embedding vector database'
+  summary     'Ruby library for embedding vector database'
   description <<~EOT
     The Ruby library, Documentrix, is designed to provide a way to build and
     query vector databases for applications in natural language processing
