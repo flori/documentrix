@@ -1,6 +1,10 @@
 require 'term/ansicolor'
 
 class Documentrix::Utils::Tags
+  # Matches tags with optional leading # characters and at least one non-space
+  # character by default:
+  DEFAULT_VALID_TAG = /\A#*(\S+)/
+
   class Tag < String
     include Term::ANSIColor
 
@@ -9,12 +13,14 @@ class Documentrix::Utils::Tags
     #
     # @param tag [String] the string representation of the tag
     # @param source [String, nil] the source URL for the tag (default: nil)
-    def initialize(tag, source: nil)
-      super(tag.to_s.gsub(/\A#+/, ''))
+    def initialize(tag, valid_tag: DEFAULT_VALID_TAG, source: nil)
+      super(tag.to_s[valid_tag, 1])
       self.source = source
     end
 
     attr_accessor :source # the source URL for the tag
+
+    attr_reader :valid_tag # the regular expression capturing a valid tag's content
 
     # The to_s method formats the tag string for output, including source URL
     # if requested.
@@ -46,15 +52,18 @@ class Documentrix::Utils::Tags
   #   Documentrix::Utils::Tags.new(%w[ foo bar ])
   #
   # @return [Documentrix::Utils::Tags] an instance of Documentrix::Utils::Tags
-  def initialize(tags = [], source: nil)
-    tags = Array(tags)
-    @set = []
+  def initialize(tags = [], valid_tag: DEFAULT_VALID_TAG, source: nil)
+    tags       = Array(tags)
+    @valid_tag = valid_tag
+    @set       = []
     tags.each { |tag| add(tag, source:) }
   end
 
+  attr_reader :valid_tag # the regular expression capturing a valid tag's content
+
   def add(tag, source: nil)
     unless tag.is_a?(Tag)
-      tag = Tag.new(tag, source:)
+      tag = Tag.new(tag, valid_tag:, source:)
     end
     index = @set.bsearch_index { _1 >= tag }
     if index == nil
