@@ -50,4 +50,19 @@ RSpec.describe Documentrix::Utils::Tags do
       "\e]8;;file:///path/to/bar.html\e\\#bar\e]8;;\e\\ \e]8;;https://foo.example.com\e\\#foo\e]8;;\e\\"
     )
   end
+
+  describe described_class::Tag do
+    it 'can be instantiated' do
+      expect(described_class.new('#foo')).to be_a described_class
+    end
+
+    it 'can cannot contain a space by default' do
+      expect(described_class.new('#foo bar')).to eq 'foo'
+    end
+
+    it 'can cannot use a custom regular expression for capturing the tag value' do
+      valid_tag = /\A#*([\w\]\[]+)/
+      expect(described_class.new('#foo[bar]!!!!', valid_tag:)).to eq 'foo[bar]'
+    end
+  end
 end
