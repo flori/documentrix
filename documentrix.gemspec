@@ -29,7 +29,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency(%q<kramdown>.freeze, ["~> 2.0".freeze])
   s.add_development_dependency(%q<debug>.freeze, [">= 0".freeze])
   s.add_development_dependency(%q<simplecov>.freeze, [">= 0".freeze])
-  s.add_runtime_dependency(%q<infobar>.freeze, ["~> 0.8".freeze])
+  s.add_runtime_dependency(%q<infobar>.freeze, ["~> 0.9".freeze])
   s.add_runtime_dependency(%q<json>.freeze, ["~> 2.0".freeze])
   s.add_runtime_dependency(%q<tins>.freeze, ["~> 1.34".freeze])
   s.add_runtime_dependency(%q<sqlite-vec>.freeze, ["~> 0.0".freeze])

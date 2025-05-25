@@ -26,7 +26,7 @@ GemHadar do
 
   required_ruby_version  '~> 3.1'
 
-  dependency 'infobar',       '~> 0.8'
+  dependency 'infobar',       '~> 0.9'
   dependency 'json',          '~> 2.0'
   dependency 'tins',          '~> 1.34'
   dependency 'sqlite-vec',    '~> 0.0'
