@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Documentrix::Documents::Splitters::Semantic do
+describe Documentrix::Documents::Splitters::Semantic do
   let :ollama do
     double('Ollama::Client')
   end

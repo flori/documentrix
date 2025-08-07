@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Documentrix::Utils::ColorizeTexts do
+describe Documentrix::Utils::ColorizeTexts do
   it 'colorizes texts' do
     ct = described_class.new(%w[ foo bar ])
     colored   = ct.to_s

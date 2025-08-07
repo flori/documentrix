@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Documentrix::Utils::Tags do
+describe Documentrix::Utils::Tags do
   it 'can be instantiated' do
     expect(described_class.new).to be_a described_class
   end

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Documentrix::Documents::SQLiteCache do
+describe Documentrix::Documents::SQLiteCache do
   let :prefix do
     'test-'
   end

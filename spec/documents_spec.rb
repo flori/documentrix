@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Documentrix::Documents do
+describe Documentrix::Documents do
   let :ollama do
     double('Ollama::Client')
   end

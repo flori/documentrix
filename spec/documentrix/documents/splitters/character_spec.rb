@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Documentrix::Documents::Splitters::Character do
+describe Documentrix::Documents::Splitters::Character do
   let :splitter do
     described_class.new chunk_size: 23, combining_string: ''
   end
@@ -58,7 +58,7 @@ RSpec.describe Documentrix::Documents::Splitters::Character do
   end
 end
 
-RSpec.describe Documentrix::Documents::Splitters::RecursiveCharacter do
+describe Documentrix::Documents::Splitters::RecursiveCharacter do
   let :splitter do
     described_class.new chunk_size: 23, combining_string: ''
   end

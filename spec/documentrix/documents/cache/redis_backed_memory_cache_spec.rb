@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Documentrix::Documents::RedisBackedMemoryCache do
+describe Documentrix::Documents::RedisBackedMemoryCache do
   let :prefix do
     'test-'
   end
