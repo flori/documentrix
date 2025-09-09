@@ -130,16 +130,5 @@ module Documentrix::Documents::Cache::Records
         end
       end
     end
-    def tags
-      if defined? super
-        super
-      else
-        each_with_object(Documentrix::Utils::Tags.new) do |(_, record), t|
-          record.tags.each do |tag|
-            t.add(tag, source: record.source)
-          end
-        end
-      end
-    end
   end
 end
