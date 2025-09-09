@@ -21,7 +21,7 @@ GemHadar do
     '.yardoc', 'doc', 'tags', 'errors.lst', 'cscope.out', 'coverage', 'tmp',
     'yard'
   package_ignore '.all_images.yml', '.tool-versions', '.gitignore', 'VERSION',
-     '.rspec', *Dir.glob('.github/**/*', File::FNM_DOTMATCH)
+     '.rspec'
   readme     'README.md'
 
   required_ruby_version  '~> 3.1'
