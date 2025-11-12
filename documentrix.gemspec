@@ -35,7 +35,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency(%q<sqlite-vec>.freeze, ["~> 0.0".freeze])
   s.add_runtime_dependency(%q<sqlite3>.freeze, ["~> 2.0".freeze, ">= 2.0.1".freeze])
   s.add_runtime_dependency(%q<kramdown-ansi>.freeze, ["~> 0.0".freeze, ">= 0.0.1".freeze])
-  s.add_runtime_dependency(%q<numo-narray>.freeze, ["~> 0.9".freeze])
+  s.add_runtime_dependency(%q<numo-narray-alt>.freeze, ["~> 0.9".freeze])
   s.add_runtime_dependency(%q<redis>.freeze, ["~> 5.0".freeze])
   s.add_runtime_dependency(%q<more_math>.freeze, ["~> 1.1".freeze])
 end
