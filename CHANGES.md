@@ -1,5 +1,19 @@
 # Changes
 
+## 2025-11-12 v0.0.3
+
+- Replaced `numo-narray` dependency with `numo-narray-alt` in `Rakefile` and
+  `documentrix.gemspec` to prevent compilation issues
+- Updated `all_images` development dependency version from `~> 0.6` to `~> 0.9`
+  in `Rakefile`
+- Updated `s.rubygems_version` from **3.6.7** to **3.7.2**
+- Updated `gem_hadar` development dependency from `~> 1.20` to `~> 2.8`
+- Added `openssl-dev` to the package list in `.all_images.yml` for Docker builds
+- Removed duplicate `tags` method
+- Replaced `RSpec.describe` with `describe` for simplified syntax
+- Updated Redis service image in `docker-compose.yml` from
+  `valkey/valkey:7.2.8-alpine` to `valkey/valkey:**8.1.1-alpine**`
+
 ## 2025-05-26 v0.0.2
 
 * Documentrix::Utils::Tags enhancements for improved tagging functionality:
