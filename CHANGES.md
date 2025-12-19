@@ -1,5 +1,29 @@
 # Changes
 
+## 2025-12-20 v0.0.4
+
+- Added `openssl-dev` to the package list in `.all_images.yml` for Docker
+  builds
+- Replaced `RSpec.describe` with `describe` for simplified syntax
+- Updated Redis service image in `docker-compose.yml` from
+  `valkey/valkey:7.2.8-alpine` to `valkey/valkey:**8.1.1-alpine**
+- Updated `required_ruby_version` from `~> 3.1` to `>= 3.1` in `Rakefile` and
+  `documentrix.gemspec`
+- Updated `rubygems_version` from **3.6.9** to **4.0.2** in
+  `documentrix.gemspec`
+- Updated `gem_hadar` development dependency to ~**2.10** in
+  `documentrix.gemspec`
+- Changed `bundle update` to `bundle update --all` in `.all_images.yml`
+- Added `fail_fast: true` and `ruby:4.0-rc-alpine` image configuration in
+  `.all_images.yml`
+- Added `RUN gem update --system` to ensure latest RubyGems version
+- Added `RUN gem install bundler gem_hadar` to install required gems
+- Changed `rm -f Gemfile.lock` to `bundle update` for dependency management
+- Added `ruby:3.1-alpine` image configuration to test matrix
+- Remove `.github` directory from package ignore list in `Rakefile`
+- Update `rubygems` version from **3.6.7** to **3.6.9** in
+  `documentrix.gemspec`
+
 ## 2025-11-12 v0.0.3
 
 - Replaced `numo-narray` dependency with `numo-narray-alt` in `Rakefile` and
