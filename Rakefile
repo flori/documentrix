@@ -24,7 +24,7 @@ GemHadar do
      '.rspec'
   readme     'README.md'
 
-  required_ruby_version  '~> 3.1'
+  required_ruby_version  '>= 3.1'
 
   dependency 'infobar',       '~> 0.9'
   dependency 'json',          '~> 2.0'
