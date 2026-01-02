@@ -1,7 +1,6 @@
-require 'redis'
-
 class Documentrix::Documents
   class RedisBackedMemoryCache < MemoryCache
+    include Documentrix::Documents::Cache::Records::RedisFullEach
 
     # The initialize method sets up the RedisBackedMemoryCache cache by
     # creating a new instance and populating it with data from the internally
@@ -16,8 +15,8 @@ class Documentrix::Documents
       super(prefix:)
       url or raise ArgumentError, 'require redis url'
       @url, @object_class = url, object_class
-      @redis_cache = Documentrix::Documents::RedisCache.new(prefix:, url:, object_class:)
-      @redis_cache.extend(Documentrix::Documents::Cache::Records::RedisFullEach)
+      @redis_cache        =
+        Documentrix::Documents::RedisCache.new(prefix:, url:, object_class:)
       @redis_cache.full_each { |key, value| @data[key] = value }
     end
 
@@ -50,12 +49,12 @@ class Documentrix::Documents
       super && result == 1
     end
 
-    # The clear method deletes all keys from the cache by scanning redis for
-    # keys that match the prefix `prefix` and then deleting them, then it does
-    # the same for the MemoryCache by calling its super.
+    # The clear_all_with_prefix method deletes all keys from the cache by
+    # scanning redis for keys that match the prefix `prefix` and then deleting
+    # them, then it does the same for the MemoryCache by calling its super.
     #
     # @return [self] self
-    def clear
+    def clear_all_with_prefix
       redis.scan_each(match: "#@prefix*") { |key| redis.del(key) }
       super
       self

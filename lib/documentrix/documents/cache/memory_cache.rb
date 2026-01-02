@@ -59,11 +59,11 @@ class Documentrix::Documents::MemoryCache
     count
   end
 
-  # The clear method removes all records from the cache that have keys starting
-  # with the prefix `prefix`.
+  # The clear_all_with_prefix method removes all records from the cache that
+  # have keys starting with the prefix `prefix`.
   #
   # @return [ Documentrix::Documents::MemoryCache ] self
-  def clear
+  def clear_all_with_prefix
     @data.delete_if { |key, _| key.start_with?(@prefix) }
     self
   end
@@ -77,7 +77,6 @@ class Documentrix::Documents::MemoryCache
   def each(&block)
     @data.select { |key,| key.start_with?(@prefix) }.each(&block)
   end
-  include Enumerable
 
   # The full_each method iterates over the data hash and yields each key-value
   # pair to the given block regardless of the prefix `prefix`.

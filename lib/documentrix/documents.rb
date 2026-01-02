@@ -269,11 +269,6 @@ class Documentrix::Documents
     end
   ensure
     cache ||= MemoryCache.new(prefix:,)
-    cache.respond_to?(:find_records) or cache.extend(Records::FindRecords)
-    cache.extend(Records::Tags)
-    if cache.respond_to?(:redis)
-      cache.extend(Records::RedisFullEach)
-    end
     return cache
   end
 

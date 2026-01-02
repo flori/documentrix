@@ -135,16 +135,16 @@ class Documentrix::Documents::Cache::SQLiteCache
       keys = '(%s)' % records.transpose.first.map { "'%s'" % quote(_1) }.join(?,)
       execute(%{DELETE FROM records WHERE key IN #{keys}})
     else
-      clear
+      clear_all_with_prefix
     end
     self
   end
 
-  # The clear method deletes all records for prefix `prefix` from the cache by
-  # executing a SQL query.
+  # The clear_all_with_prefix method deletes all records for prefix `prefix`
+  # from the cache by executing a SQL query.
   #
   # @return [ Documentrix::Documents::RedisBackedMemoryCache ] self
-  def clear
+  def clear_all_with_prefix
     execute(%{DELETE FROM records WHERE key LIKE ?}, [ "#@prefix%" ])
     self
   end
@@ -174,7 +174,6 @@ class Documentrix::Documents::Cache::SQLiteCache
     end
     self
   end
-  include Enumerable
 
   # The full_each method iterates over all keys and values in the cache,
   # regardless of their prefix.

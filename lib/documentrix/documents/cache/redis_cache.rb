@@ -3,6 +3,7 @@ require 'redis'
 
 class Documentrix::Documents::RedisCache
   include Documentrix::Documents::Cache::Common
+  include Documentrix::Documents::Cache::Records::RedisFullEach
 
   # The initialize method sets up the Documentrix::Documents::RedisCache
   # instance's by setting its prefix attribute to the given value and
@@ -105,12 +106,13 @@ class Documentrix::Documents::RedisCache
     s
   end
 
-  # The clear method removes all key-value pairs associated with the given
-  # prefix from this cache instance.
+  # The clear_all_with_prefix method removes all key-value pairs associated
+  # with the given prefix from this cache instance.
   #
   # @return [Documentrix::Documents::RedisCache] self
-  def clear
+  def clear_all_with_prefix
     redis.scan_each(match: "#@prefix*") { |key| redis.del(key) }
+    defined? super and super
     self
   end
 
@@ -124,5 +126,4 @@ class Documentrix::Documents::RedisCache
     redis.scan_each(match: "#@prefix*") { |key| block.(key, self[unpre(key)]) }
     self
   end
-  include Enumerable
 end

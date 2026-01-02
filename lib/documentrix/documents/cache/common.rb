@@ -1,5 +1,6 @@
 module Documentrix::Documents::Cache::Common
   include Documentrix::Utils::Math
+  include Enumerable
 
   # The initialize method sets up the Documentrix::Documents::Cache instance's
   # by setting its prefix attribute to the given value.
@@ -39,5 +40,86 @@ module Documentrix::Documents::Cache::Common
   # @return [String] the input string without the prefix.
   def unpre(key)
     key.sub(/\A#@prefix/, '')
+  end
+
+  # The find_records method finds records that match the given needle and
+  # tags.
+  #
+  # @param needle [ Array ] an array containing the embedding vector
+  # @param tags [ String, Array ] a string or array of strings representing the tags to search for
+  # @param max_records [ Integer ] the maximum number of records to return
+  #
+  # @yield [ record ]
+  #
+  # @return [ Array<Documentrix::Documents::Records> ] an array containing the matching records
+  def find_records(needle, tags: nil, max_records: nil)
+    tags    = Documentrix::Utils::Tags.new(Array(tags)).to_a
+    records = self
+    if tags.present?
+      records = records.select { |_key, record| (tags & record.tags).size >= 1 }
+    end
+    needle_norm = norm(needle)
+    records     = records.sort_by { |key, record|
+      record.key        = key
+      record.similarity = cosine_similarity(
+        a: needle,
+        b: record.embedding,
+        a_norm: needle_norm,
+        b_norm: record.norm,
+      )
+    }
+    records.transpose.last&.reverse.to_a
+  end
+
+  # Returns a set of unique tags found in the cache records.
+  #
+  # This method iterates through all records in the cache and collects unique
+  # tags from each record's tags collection. It constructs a new
+  # Documentrix::Utils::Tags object containing all the unique tags encountered.
+  #
+  # @return [Documentrix::Utils::Tags] a set of unique tags from all records in
+  #   the cache
+  def tags
+    each_with_object(Documentrix::Utils::Tags.new) do |(_, record), t|
+      record.tags.each do |tag|
+        t.add(tag, source: record.source)
+      end
+    end
+  end
+
+  # The clear_for_tags method removes all records from the cache that have tags
+  # matching any of the provided tags.
+  #
+  # @param tags [Array<String>] an array of tag names to filter records by
+  #
+  # @return [self] self
+  def clear_for_tags(tags)
+    each do |key, record|
+      if (tags & record.tags.to_a).size >= 1
+        delete(unpre(key))
+      end
+    end
+    self
+  end
+
+  # The clear method removes cached records based on the provided tags or
+  # clears all records with the current prefix.
+  #
+  # When tags are provided, it removes only the records that have matching
+  # tags. If no tags are provided, it removes all records that have keys
+  # starting with the current prefix.
+  #
+  # @param tags [NilClass, Array<String>] an array of tag names to filter
+  #   records by, or nil to clear all records
+  #
+  # @return [self] returns the cache instance for method chaining
+  def clear(tags: nil)
+    tags = Documentrix::Utils::Tags.new(tags).to_a
+    if tags.present?
+      clear_for_tags(tags)
+    else
+      clear_all_with_prefix
+    end
+    self
   end
 end
