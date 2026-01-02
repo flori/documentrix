@@ -1,10 +1,31 @@
 require 'term/ansicolor'
 
+# A collection of tags with optional source tracking and formatting
+# capabilities.
+#
+# The Tags class manages a collection of unique tags, ensuring no duplicates while maintaining sorted order.
+# Each tag can optionally be associated with a source URL for tracking origins.
+# The class provides methods for adding, iterating, and formatting tags for display.
+#
+# @example
+#   tags = Documentrix::Utils::Tags.new(%w[ foo bar ])
+#   tags.add('baz')
+#   tags.to_s # => "bar baz foo"
 class Documentrix::Utils::Tags
   # Matches tags with optional leading # characters and at least one non-space
   # character by default:
   DEFAULT_VALID_TAG = /\A#*(\S+)/
 
+  # A tag string that includes optional source tracking functionality.
+  #
+  # The Tag class extends String and adds the ability to track the source URL
+  # where the tag originated. It provides methods for formatting the tag string
+  # for output, including the option to include a hyperlink to the source.
+  #
+  # @example
+  #   tag = Documentrix::Utils::Tags::Tag.new('example')
+  #   tag.source = 'https://example.com'
+  #   tag.to_s # => "\e]8;;https://example.com\e\\\\#example\e]8;;\e\\\\"
   class Tag < String
     include Term::ANSIColor
 
@@ -61,6 +82,19 @@ class Documentrix::Utils::Tags
 
   attr_reader :valid_tag # the regular expression capturing a valid tag's content
 
+  # The add method adds a tag to the collection, ensuring uniqueness and
+  # maintaining sorted order.
+  #
+  # If the tag is not already a Tag instance, it creates one using the provided
+  # source. The method uses binary search to find the correct insertion point
+  # to maintain the sorted order.
+  # Duplicate tags are not added, and the method returns self to allow for
+  # method chaining.
+  #
+  # @param tag [ String, Documentrix::Utils::Tags::Tag ] the tag to be added
+  # @param source [ String, nil ] the source URL associated with the tag (optional)
+  #
+  # @return [ Documentrix::Utils::Tags ] self
   def add(tag, source: nil)
     unless tag.is_a?(Tag)
       tag = Tag.new(tag, valid_tag:, source:)

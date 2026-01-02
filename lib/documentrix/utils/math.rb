@@ -1,3 +1,8 @@
+# A module that provides mathematical utilities for vector operations.
+#
+# This module includes methods for calculating vector norms, computing cosine
+# similarity between vectors, and converting arrays into Numo::NArray objects
+# for numerical computations.
 module Documentrix::Utils::Math
   # Returns the cosine similarity between two vectors `a` and `b`, 1.0 is
   # exactly the same, 0.0 means decorrelated.

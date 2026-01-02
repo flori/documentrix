@@ -3,6 +3,14 @@ require 'sqlite3'
 require 'sqlite_vec'
 require 'digest/md5'
 
+# SQLiteCache is a cache implementation that uses SQLite database for storing
+# document embeddings and related metadata.
+#
+# This class provides a persistent cache storage solution for document
+# embeddings, leveraging SQLite's capabilities to store both the embedding
+# vectors and associated text data, tags, and source information.
+# It supports efficient vector similarity searches using the sqlite_vec
+# extension for fast nearest neighbor queries.
 class Documentrix::Documents::Cache::SQLiteCache
   include Documentrix::Documents::Cache::Common
 

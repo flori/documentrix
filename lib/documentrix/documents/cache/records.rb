@@ -1,4 +1,18 @@
+# Module for cache record definitions used in Documentrix document caching.
+#
+# This module provides the Record class and RedisFullEach module for managing
+# cached document embeddings and their associated metadata in the Documentrix
+# library's caching system.
 module Documentrix::Documents::Cache::Records
+  # A record class for caching document embeddings and their associated
+  # metadata.
+  #
+  # This class extends JSON::GenericObject and is used to represent cached
+  # document entries in the Documentrix library. It stores text content,
+  # embedding vectors, normalization values, source information, and tags
+  # associated with each document record. The class provides methods for string
+  # representation, tag handling, and equality comparison based on text
+  # content.
   class Record < JSON::GenericObject
     # The initialize method sets default values for the text and norm
     # attributes.
@@ -42,6 +56,13 @@ module Documentrix::Documents::Cache::Records
     alias inspect to_s
   end
 
+  # Module for providing full iteration capability over Redis cache entries
+  #
+  # This module extends cache implementations to support iterating over all
+  # entries in a Redis cache, regardless of prefix, by scanning all keys
+  # matching a specific pattern and retrieving their values.
+  #
+  # @api private
   module RedisFullEach
     # The full_each method iterates over all records in the cache and yields
     # them to the block.

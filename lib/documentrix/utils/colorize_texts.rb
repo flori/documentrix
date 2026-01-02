@@ -1,6 +1,17 @@
 require 'term/ansicolor'
 require 'kramdown/ansi'
 
+# A utility class for colorizing and formatting text output with ANSI color
+# codes and size information.
+#
+# The ColorizeTexts class takes an array of text strings and formats them with
+# different ANSI colors for visual distinction. It also appends the size of each
+# text block to the output, making it useful for debugging or displaying
+# information about text chunks in a visually appealing way.
+#
+# @example
+#   colorizer = Documentrix::Utils::ColorizeTexts.new('foo', 'bar')
+#   puts colorizer.to_s
 class Documentrix::Utils::ColorizeTexts
   include Math
   include Term::ANSIColor

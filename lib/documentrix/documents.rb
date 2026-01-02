@@ -4,6 +4,17 @@ require 'kramdown/ansi'
 
 class Documentrix::Documents
 end
+# Module for managing document caches in Documentrix
+#
+# This module provides the foundational cache interface and implementations for
+# storing and retrieving document embeddings and related metadata. It supports
+# multiple cache backends including memory, Redis, and SQLite, enabling
+# flexible storage options for vector databases.
+#
+# The cache system handles operations such as setting, retrieving, and deleting
+# cached entries, as well as querying and filtering cached data based on tags
+# and similarity searches. It includes common functionality for managing cache
+# prefixes, enumerating collections, extracting tags, and clearing cache entries.
 module Documentrix::Documents::Cache
 end
 require 'documentrix/documents/cache/records'
@@ -11,15 +22,46 @@ require 'documentrix/documents/cache/memory_cache'
 require 'documentrix/documents/cache/redis_cache'
 require 'documentrix/documents/cache/redis_backed_memory_cache'
 require 'documentrix/documents/cache/sqlite_cache'
+
+# Module for text splitting operations in Documentrix
+#
+# This module provides functionality for splitting text into smaller chunks
+# using various strategies. It includes both simple character-based splitting
+# and more sophisticated semantic splitting that considers the meaning
+# and structure of the text when determining split points.
+#
+# The splitters are designed to work with the Documentrix::Documents class
+# to prepare text data for embedding and storage in vector databases.
 module Documentrix::Documents::Splitters
 end
 require 'documentrix/documents/splitters/character'
 require 'documentrix/documents/splitters/semantic'
 
+# Documentrix::Documents is a class that provides functionality for building
+# and querying vector databases for natural language processing and large
+# language model applications.
+#
+# It allows users to store and retrieve dense vector embeddings for text
+# strings, supporting various cache backends including memory, Redis, and
+# SQLite for efficient data management.
+#
+# The class handles the complete workflow of adding documents, computing their
+# embeddings using a specified model, storing them in a cache, and performing
+# similarity searches to find relevant documents based on query text.
+#
+# @example
+#   documents = Documentrix::Documents.new(
+#     ollama: ollama_client,
+#     model: 'mxbai-embed-large',
+#     collection: 'my-collection'
+#   )
+#   documents.add(['text1', 'text2'])
+#   results = documents.find('search query')
 class Documentrix::Documents
   include Kramdown::ANSI::Width
   include Documentrix::Documents::Cache
 
+  # Shortcut for Documentrix::Documents::Cache::Records::Record
   Record = Class.new Documentrix::Documents::Cache::Records::Record
 
   # The initialize method sets up the Documentrix::Documents instance by

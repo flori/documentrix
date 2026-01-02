@@ -1,5 +1,17 @@
 require 'documentrix/documents/cache/common'
 
+# MemoryCache is an in-memory cache implementation for document embeddings.
+#
+# This class provides a cache store for document embeddings using a hash-based
+# in-memory storage mechanism. It implements the common cache interface
+# defined in Documentrix::Documents::Cache::Common and supports operations
+# such as setting, retrieving, and deleting cached entries, as well as
+# iterating over cached items.
+#
+# The cache uses a prefix to namespace keys and supports clearing entries
+# based on prefixes or specific tags. It is designed to be used as a
+# temporary storage mechanism during processing and is not persistent
+# across application restarts.
 class Documentrix::Documents::MemoryCache
   include Documentrix::Documents::Cache::Common
 

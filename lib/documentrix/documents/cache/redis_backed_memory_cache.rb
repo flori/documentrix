@@ -1,4 +1,15 @@
 class Documentrix::Documents
+  # RedisBackedMemoryCache is an in-memory cache implementation that delegates
+  # to a Redis cache for persistence.
+  #
+  # This class provides a hybrid caching solution where cache operations are
+  # first performed in memory and then synchronized with a Redis backend. It
+  # inherits from MemoryCache and includes the RedisFullEach module to enable
+  # iteration over records in the Redis cache.
+  #
+  # The cache uses a prefix to namespace keys and supports operations such as
+  # setting, retrieving, and deleting cached entries. It is designed to provide
+  # fast in-memory access while ensuring data persistence through Redis.
   class RedisBackedMemoryCache < MemoryCache
     include Documentrix::Documents::Cache::Records::RedisFullEach
 

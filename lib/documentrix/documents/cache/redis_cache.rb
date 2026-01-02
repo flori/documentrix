@@ -1,6 +1,18 @@
 require 'documentrix/documents/cache/common'
 require 'redis'
 
+# RedisCache is a cache implementation that uses Redis for storing document
+# embeddings and related metadata.
+#
+# This class provides a persistent cache storage solution for document
+# embeddings, leveraging Redis's capabilities to store both the embedding
+# vectors and associated text data, tags, and source information. It supports
+# efficient vector similarity searches through Redis-based operations.
+#
+# @example
+#   cache = Documentrix::Documents::RedisCache.new(prefix: 'docs-', url: 'redis://localhost:6379')
+#   cache['key'] = { text: 'example', embedding: [0.1, 0.2, 0.3] }
+#   value = cache['key']
 class Documentrix::Documents::RedisCache
   include Documentrix::Documents::Cache::Common
   include Documentrix::Documents::Cache::Records::RedisFullEach

@@ -1,3 +1,15 @@
+# Common interface for document caches
+#
+# This module defines the standard interface that all document cache
+# implementations must adhere to. It provides shared functionality for managing
+# cached document embeddings, including methods for setting, retrieving, and
+# deleting cache entries, as well as querying and filtering cached data based
+# on tags and similarity searches.
+#
+# The module includes methods for prefix management, collection enumeration,
+# tag extraction, and cache clearing operations, ensuring consistent behavior
+# across different cache backends such as
+# memory, Redis, and SQLite.
 module Documentrix::Documents::Cache::Common
   include Documentrix::Utils::Math
   include Enumerable
