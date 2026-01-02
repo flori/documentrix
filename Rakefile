@@ -24,6 +24,10 @@ GemHadar do
      '.rspec'
   readme     'README.md'
 
+  changelog do
+    filename 'CHANGES.md'
+  end
+
   required_ruby_version  '>= 3.1'
 
   dependency 'infobar',         '~> 0.9'
