@@ -8,6 +8,7 @@ module Documentrix
   end
 end
 
+require 'set'
 require 'json'
 require 'infobar'
 require 'tins'
