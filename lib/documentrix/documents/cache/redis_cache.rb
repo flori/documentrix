@@ -24,11 +24,10 @@ class Documentrix::Documents::RedisCache
   # @param [String] prefix the string to be used as the prefix for this cache
   # @param [String] url the URL of the Redis server (default: ENV['REDIS_URL'])
   # @param [Class] object_class the class of objects stored in Redis (default: nil)
-  # @param [Integer] ex the expiration time in seconds (default: nil)
-  def initialize(prefix:, url: ENV['REDIS_URL'], object_class: nil, ex: nil)
+  def initialize(prefix:, url: ENV['REDIS_URL'], object_class: nil)
     super(prefix:)
     url or raise ArgumentError, 'require redis url'
-    @url, @object_class, @ex = url, object_class, ex
+    @url, @object_class = url, object_class
   end
 
   attr_reader :object_class # the class of objects stored in the cache
@@ -66,16 +65,10 @@ class Documentrix::Documents::RedisCache
   #
   # @param [String] key the string representation of the key
   # @param [Object] value the object to be stored under the given key
-  # @option ex [Integer] ex the expiration time in seconds (default: nil)
   #
   # @return [Object] self
-  def set(key, value, ex: nil)
-    ex ||= @ex
-    if !ex.nil? && ex < 1
-      redis.del(pre(key))
-    else
-      redis.set(pre(key), JSON.generate(value), ex:)
-    end
+  def set(key, value)
+    redis.set(pre(key), JSON.generate(value))
     value
   end
 

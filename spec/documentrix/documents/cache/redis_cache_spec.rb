@@ -50,17 +50,14 @@ describe Documentrix::Documents::RedisCache do
 
     it 'can set a value for a key' do
       key, value = 'foo', { test: true }
-      expect(redis).to receive(:set).with(prefix + key, JSON(value), ex: nil)
+      expect(redis).to receive(:set).with(prefix + key, JSON(value))
       cache[key] = value
     end
 
-    it 'can set a value for a key with ttl' do
-      cache = described_class.new prefix:, url: 'something', ex: 3_600
-      key, value = 'foo', { test: true }
-      expect(redis).to receive(:set).with(prefix + key, JSON(value), ex: 3_600)
-      cache[key] = value
-      expect(redis).to receive(:ttl).with(prefix + key).and_return 3_600
-      expect(cache.ttl(key)).to eq 3_600
+    it 'can read ttl of a value for a key' do
+      key = 'foo'
+      expect(redis).to receive(:ttl).with(prefix + key)
+      cache.ttl(key)
     end
 
     it 'can determine if key exists' do
@@ -80,7 +77,7 @@ describe Documentrix::Documents::RedisCache do
 
     it 'can iterate over keys, values' do
       key, value = 'foo', { 'test' => true }
-      expect(redis).to receive(:set).with(prefix + key, JSON(value), ex: nil)
+      expect(redis).to receive(:set).with(prefix + key, JSON(value))
       cache[key] = value
       expect(redis).to receive(:scan_each).with(match: "#{prefix}*").
         and_yield("#{prefix}foo")
