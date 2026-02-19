@@ -40,7 +40,7 @@ GemHadar do
   dependency 'redis',           '~> 5.0'
   dependency 'more_math',       '~> 1.1'
 
-  development_dependency 'all_images', '~> 0.9'
+  development_dependency 'all_images', '~> 0.12'
   development_dependency 'rspec',      '~> 3.2'
   development_dependency 'kramdown',   '~> 2.0'
   development_dependency 'debug'

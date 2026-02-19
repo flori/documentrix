@@ -11,10 +11,20 @@ script: &script |-
 fail_fast: true
 
 before: |-
-  rm -vf Gemfile.lock
+  echo 🏁 Preparing…
+  echo Deleting Gemfile.lock
+  rm -f Gemfile.lock
 
 after: |-
-  rm -vf Gemfile.lock
+  if [[ "$RESULT" = "1" ]]
+  then
+    echo 😵 Some tests failed!
+  else
+    echo 🥳 All tests passed!
+  fi
+  echo Deleting Gemfile.lock
+  rm -f Gemfile.lock
+
 
 images:
   ruby:4.0-alpine: *script
