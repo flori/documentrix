@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.licenses = ["MIT".freeze]
   s.rdoc_options = ["--title".freeze, "Documentrix - Ruby library for embedding vector database".freeze, "--main".freeze, "README.md".freeze]
   s.required_ruby_version = Gem::Requirement.new(">= 3.1".freeze)
-  s.rubygems_version = "4.0.3".freeze
+  s.rubygems_version = "4.0.8".freeze
   s.summary = "Ruby library for embedding vector database".freeze
   s.test_files = ["spec/documentrix/documents/cache/interface_spec.rb".freeze, "spec/documentrix/documents/cache/memory_cache_spec.rb".freeze, "spec/documentrix/documents/cache/redis_backed_memory_cache_spec.rb".freeze, "spec/documentrix/documents/cache/redis_cache_spec.rb".freeze, "spec/documentrix/documents/cache/sqlite_cache_spec.rb".freeze, "spec/documentrix/documents/splitters/character_spec.rb".freeze, "spec/documentrix/documents/splitters/semantic_spec.rb".freeze, "spec/documents_spec.rb".freeze, "spec/spec_helper.rb".freeze, "spec/utils/colorize_texts_spec.rb".freeze, "spec/utils/tags_spec.rb".freeze]
 
