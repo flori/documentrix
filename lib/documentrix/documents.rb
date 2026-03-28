@@ -20,7 +20,6 @@ end
 require 'documentrix/documents/cache/records'
 require 'documentrix/documents/cache/memory_cache'
 require 'documentrix/documents/cache/redis_cache'
-require 'documentrix/documents/cache/redis_backed_memory_cache'
 require 'documentrix/documents/cache/sqlite_cache'
 
 # Module for text splitting operations in Documentrix
@@ -271,6 +270,21 @@ class Documentrix::Documents
     ([ default_collection ] + @cache.collections('%s-' % class_prefix)).uniq
   end
 
+  # Rename the current collection, moving all keys from the old prefix to a new
+  # one. After the rename the instance’s `collection` attribute points to
+  # `new_collection`, and the cache keys are updated accordingly.
+  #
+  # @param new_collection [Symbol] The name of the collection to rename to.
+  # @return [Documentrix::Documents] Returns `self` to allow method chaining.
+  def rename_collection(new_collection)
+    new_collection = new_collection.to_sym
+    collections.member?(new_collection) and
+      raise ArgumentError, "new collection #{new_collection} already exists!"
+    new_prefix = '%s-%s-' % [ class_prefix, new_collection ]
+    @cache.move_prefix(prefix, new_prefix)
+    self.collection = new_collection
+  end
+
   # The tags method returns an array of unique tags from the cache.
   #
   # @return [Documentrix::Utils::Tags] A set of unique tags
@@ -342,6 +356,11 @@ class Documentrix::Documents
     @ollama.embed(model:, input:, options:).embeddings
   end
 
+  # Returns the base prefix string used for cache keys.
+  # This string is prefixed to the collection name to form the full key
+  # namespace.
+  #
+  # @return [String] the prefix identifier for Documentrix documents.
   def class_prefix
     'Documents'
   end

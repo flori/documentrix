@@ -51,6 +51,21 @@ describe Documentrix::Documents::MemoryCache do
     expect(s).to eq 2
   end
 
+  it 'can move prefixes' do
+    key, value = 'foo', { test1: true }
+    cache[key] = value
+    cache.prefix = 'test2-'
+    key, value = 'bar', { test2: true }
+    cache[key] = value
+    expect(cache.full_each.to_a).to eq(
+      [["test-foo", {test1: true}], ["test2-bar", {test2: true}]]
+    )
+    cache.move_prefix('test-', 'test3-')
+    expect(cache.full_each.to_a).to eq(
+      [["test2-bar", {test2: true}], ["test3-foo", {test1: true}]]
+    )
+  end
+
   it 'can delete' do
     key, value = 'foo', { test: true }
     expect(cache.delete(key)).to be_falsy
@@ -70,6 +85,20 @@ describe Documentrix::Documents::MemoryCache do
       expect(k).to eq prefix + key
       expect(v).to eq value
     end
+    expect(cache.each.to_a).to eq [ ["test-foo", {test: true}] ]
+    expect(cache.to_a).to eq [ ["test-foo", {test: true}] ]
+  end
+
+  it "can iterate over the full cache's keys, values" do
+    key, value = 'foo', { test: true }
+    cache[key] = value
+    cache.prefix = 'test2-'
+    key, value = 'bar', { test2: true }
+    cache[key] = value
+    expect(cache.full_each.to_a).to eq [
+      ["test-foo", {test: true}],
+      ["test2-bar", {test2: true}],
+    ]
   end
 
   it 'returns size' do

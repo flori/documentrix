@@ -80,12 +80,31 @@ class Documentrix::Documents::MemoryCache
     self
   end
 
+  # Move all keys that start with +old_prefix+ into a new prefix.
+  #
+  # This helper is used when a collection is renamed.  It iterates over all
+  # cached entries, selects those whose keys start with *old_prefix*, strips
+  # that prefix, then re‑inserts the entry with the *new_prefix* instead.
+  #
+  # @param old_prefix [String] The prefix to look for on existing keys.
+  # @param new_prefix [String] The prefix that will replace *old_prefix*.
+  # @return [Documentrix::Documents::MemoryCache] Returns `self` to allow
+  #   chaining.
+  def move_prefix(old_prefix, new_prefix)
+    new_data = @data.dup
+    full_each do |key, value|
+      key.start_with?(old_prefix) or next
+      unpre_key = unpre(key, prefix: old_prefix)
+      new_data[pre(unpre_key, prefix: new_prefix)] = new_data.delete(key)
+    end
+    @data.replace(new_data)
+    self
+  end
+
   # The each method iterates over the cache's keys and values under a given
   # prefix `prefix`.
   #
   # @yield [key, value] Each key-value pair in the cache
-  #
-  # @return [void]
   def each(&block)
     @data.select { |key,| key.start_with?(@prefix) }.each(&block)
   end
@@ -94,8 +113,6 @@ class Documentrix::Documents::MemoryCache
   # pair to the given block regardless of the prefix `prefix`.
   #
   # @yield [key, value] Each key-value pair in the data hash
-  #
-  # @return [void]
   def full_each(&block)
     @data.each(&block)
   end

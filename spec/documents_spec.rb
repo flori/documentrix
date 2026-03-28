@@ -162,6 +162,28 @@ describe Documentrix::Documents do
       expect(documents.collections).to eq [ :default ]
     end
 
+    it 'can rename collections' do
+      documents.collection = :foo
+      documents << 'foo'
+      expect(documents.collections).to eq %i[ default foo ]
+      documents.rename_collection(:bar)
+      expect(documents.collection).to eq :bar
+      expect(documents.collections).to eq %i[ default bar ]
+      expect(documents.exist?('foo')).to be true
+    end
+
+    it 'cannot rename collections into already existing ones' do
+      documents.collection = :foo
+      documents << 'foo'
+      expect(documents.collections).to eq %i[ default foo ]
+      documents.collection = :bar
+      documents << 'foo'
+      expect(documents.collections).to eq %i[ default foo bar ]
+      expect {
+        documents.rename_collection(:foo)
+      }.to raise_error(ArgumentError, 'new collection foo already exists!')
+    end
+
     it 'can change collection' do
       expect(documents.instance_eval { @cache }).to receive(:prefix=).
         with(/#@collection/).and_call_original

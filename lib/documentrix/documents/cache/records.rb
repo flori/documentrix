@@ -55,25 +55,4 @@ module Documentrix::Documents::Cache::Records
 
     alias inspect to_s
   end
-
-  # Module for providing full iteration capability over Redis cache entries
-  #
-  # This module extends cache implementations to support iterating over all
-  # entries in a Redis cache, regardless of prefix, by scanning all keys
-  # matching a specific pattern and retrieving their values.
-  #
-  # @api private
-  module RedisFullEach
-    # The full_each method iterates over all records in the cache and yields
-    # them to the block.
-    #
-    # @yield [ key, value ] where key is the record's key and value is the record itself
-    def full_each(&block)
-      redis.scan_each(match: [ Documentrix::Documents, ?* ] * ?-) do |key|
-        value = redis.get(key) or next
-        value = JSON(value, object_class: Documentrix::Documents::Record)
-        block.(key, value)
-      end
-    end
-  end
 end

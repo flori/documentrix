@@ -54,17 +54,22 @@ describe Documentrix::Documents::RedisCache do
       cache[key] = value
     end
 
-    it 'can read ttl of a value for a key' do
-      key = 'foo'
-      expect(redis).to receive(:ttl).with(prefix + key)
-      cache.ttl(key)
-    end
-
     it 'can determine if key exists' do
       key = 'foo'
       expect(redis).to receive(:exists?).with(prefix + key).and_return(false, true)
       expect(cache.key?('foo')).to eq false
       expect(cache.key?('foo')).to eq true
+    end
+
+    it 'can move prefixes' do
+      expect(redis).to receive(:get).with(prefix + 'foo').and_return(JSON(foo: true))
+      expect(redis).to receive(:get).with('test2-bar').and_return(JSON(foo: true))
+      expect(redis).to receive(:set).with('test3-foo', '{"foo":true}')
+      expect(redis).to receive(:del).with('test-foo')
+      expect(redis).to receive(:scan_each).with(match: ?*).
+        and_yield("#{prefix}foo").
+        and_yield("test2-bar")
+      cache.move_prefix('test-', 'test3-')
     end
 
     it 'can delete' do

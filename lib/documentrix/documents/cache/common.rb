@@ -40,18 +40,20 @@ module Documentrix::Documents::Cache::Common
   # Returns a string representing the given `key` prefixed with the defined
   # prefix.
   #
-  # @param key [String] the key to join with the prefix
-  # @return [String] the joined string of prefix and key
-  def pre(key)
-    [ @prefix, key ].join
+  # @param key [String] the key to prefix
+  # @param prefix [String] the prefix to use (defaults to the cache's prefix)
+  # @return [String] the prefixed key
+  def pre(key, prefix: @prefix)
+    [ prefix, key ].join
   end
 
   # Returns a string with the prefix removed from the given `key`.
   #
   # @param key [String] the input string containing the prefix.
+  # @param prefix [String] the prefix to use (defaults to the cache's prefix)
   # @return [String] the input string without the prefix.
-  def unpre(key)
-    key.sub(/\A#@prefix/, '')
+  def unpre(key, prefix: @prefix)
+    key.sub(/\A#{prefix}/, '')
   end
 
   # The find_records method finds records that match the given needle and

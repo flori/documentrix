@@ -75,6 +75,27 @@ describe Documentrix::Documents::SQLiteCache do
     expect(s).to eq 2
   end
 
+  it 'can move prefixes' do
+    key, value = 'foo', test_value
+    cache[key] = value
+    cache.prefix = 'test2-'
+    key, value = 'bar', test_value
+    cache[key] = value
+    expect(cache.full_each.to_a).to eq(
+      [
+        ["test-foo", Documentrix::Documents::Record[test_value]],
+        ["test2-bar", Documentrix::Documents::Record[test_value]],
+      ]
+    )
+    cache.move_prefix('test-', 'test3-')
+    expect(cache.full_each.to_a).to eq(
+      [
+        ["test3-foo", Documentrix::Documents::Record[test_value]],
+        ["test2-bar", Documentrix::Documents::Record[test_value]],
+      ]
+    )
+  end
+
   it 'can delete' do
     key, value = 'foo', test_value
     expect(cache.delete(key)).to be_falsy
@@ -136,6 +157,19 @@ describe Documentrix::Documents::SQLiteCache do
 
   it 'can iterate over keys under a prefix' do
     cache['foo'] = test_value
+    expect(cache.each.to_a).to eq [ [ 'test-foo', Documentrix::Documents::Record[test_value] ] ]
     expect(cache.to_a).to eq [ [ 'test-foo', Documentrix::Documents::Record[test_value] ] ]
+  end
+
+  it "can iterate over the full cache's keys, values" do
+    key, value = 'foo', test_value
+    cache[key] = value
+    cache.prefix = 'test2-'
+    key, value = 'bar', test_value
+    cache[key] = value
+    expect(cache.full_each.to_a).to eq [
+      ["test-foo", Documentrix::Documents::Record[test_value] ],
+      ["test2-bar", Documentrix::Documents::Record[test_value] ],
+    ]
   end
 end

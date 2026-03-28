@@ -157,6 +157,31 @@ class Documentrix::Documents::Cache::SQLiteCache
     self
   end
 
+  # Move a key prefix in the cache.
+  #
+  # This operation updates every record whose key starts with +old_prefix+,
+  # rewriting the prefix to +new_prefix+. It uses SQLite’s built‑in `replace()`
+  # string function, which means the change is atomic and performed entirely
+  # inside the database engine—no Ruby‑side iteration or temporary data
+  # structures are needed.
+  #
+  # @param old_prefix [String] the current prefix to replace (must match the
+  #        beginning of the keys you want to move).
+  # @param new_prefix [String] the new prefix that should take its place.
+  #
+  # @return [Documentrix::Documents::Cache::SQLiteCache] the cache instance,
+  #         enabling method chaining.
+  def move_prefix(old_prefix, new_prefix)
+    execute(
+      %{
+        UPDATE records
+          SET key = replace(key, '#{quote(old_prefix)}', '#{quote(new_prefix)}')
+          WHERE key LIKE ?
+      },
+      old_prefix + '%'
+    )
+  end
+
   # The each method iterates over records matching the given prefix and yields
   # them to the block.
   #
@@ -168,6 +193,8 @@ class Documentrix::Documents::Cache::SQLiteCache
   #     puts "#{key}: #{value}"
   #   end
   def each(prefix: "#@prefix%", &block)
+    block or return enum_for(__method__, prefix:)
+
     execute(%{
       SELECT records.key, records.text, records.norm, records.source,
         records.tags, embeddings.embedding
@@ -190,6 +217,8 @@ class Documentrix::Documents::Cache::SQLiteCache
   #
   # @return [ Documentrix::Documents::Cache::SQLiteCache ] self
   def full_each(&block)
+    block or return enum_for(__method__)
+
     each(prefix: ?%, &block)
   end
 

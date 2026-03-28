@@ -15,7 +15,6 @@ require 'redis'
 #   value = cache['key']
 class Documentrix::Documents::RedisCache
   include Documentrix::Documents::Cache::Common
-  include Documentrix::Documents::Cache::Records::RedisFullEach
 
   # The initialize method sets up the Documentrix::Documents::RedisCache
   # instance's by setting its prefix attribute to the given value and
@@ -47,7 +46,7 @@ class Documentrix::Documents::RedisCache
   def [](key)
     value = redis.get(pre(key))
     unless value.nil?
-      object_class ? JSON(value, object_class:) : JSON(value)
+      object_class ? JSON.parse(value, object_class:) : JSON.parse(value)
     end
   end
 
@@ -70,15 +69,6 @@ class Documentrix::Documents::RedisCache
   def set(key, value)
     redis.set(pre(key), JSON.generate(value))
     value
-  end
-
-  # The ttl method returns the time-to-live (TTL) value for the given key
-  #
-  # @param [String] key the string representation of the key
-  #
-  # @return [Integer, nil] the TTL value if it exists in Redis, or nil otherwise
-  def ttl(key)
-    redis.ttl(pre(key))
   end
 
   # The key? method checks if the given key exists in Redis by calling the
@@ -121,6 +111,26 @@ class Documentrix::Documents::RedisCache
     self
   end
 
+  # Renames all keys that start with <tt>old_prefix</tt> to use
+  # <tt>new_prefix</tt>. The method iterates over every affected key,
+  # reconstructs the new key name (preserving the part of the key that follows
+  # the old prefix), writes the value under the new name, and deletes the old
+  # key.
+  #
+  # @param old_prefix [String] The prefix that currently identifies the target keys.
+  # @param new_prefix [String] The prefix that should replace <tt>old_prefix</tt>.
+  #
+  # @return [self] The cache instance, facilitating method chaining.
+  def move_prefix(old_prefix, new_prefix)
+    full_each(prefix: '') do |key, value|
+      key.start_with?(old_prefix) or next
+      unpre_key = unpre(key, prefix: old_prefix)
+      redis.set(pre(unpre_key, prefix: new_prefix), JSON.generate(value))
+      redis.del(key)
+    end
+    self
+  end
+
   # The each method iterates over the cache keys with prefix `prefix` and
   # yields each key-value pair to the given block.
   #
@@ -128,7 +138,23 @@ class Documentrix::Documents::RedisCache
   #
   # @return [self] self
   def each(&block)
+    block or return enum_for(__method__)
+
     redis.scan_each(match: "#@prefix*") { |key| block.(key, self[unpre(key)]) }
     self
+  end
+
+  # The full_each method iterates over all records in the cache and yields
+  # them to the block.
+  #
+  # @yield [ key, value ] where key is the record's key and value is the record itself
+  def full_each(prefix: 'Documents-', &block)
+    block or return enum_for(__method__, prefix:)
+
+    redis.scan_each(match: prefix + ?*) do |key|
+      value = redis.get(key) or next
+      value = object_class ? JSON.parse(value, object_class:) : JSON.parse(value)
+      block.(key, value)
+    end
   end
 end
