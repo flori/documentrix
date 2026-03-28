@@ -1,5 +1,33 @@
 # Changes
 
+## 2026-03-29 v0.1.0
+
+- Added `Documentrix::Documents#rename_collection` to rename a collection and
+  delegate key moving to the cache.
+- Extended `Documentrix::Documents::Cache::Common#pre` and `#unpre` to accept
+  an optional `prefix` argument.
+- Implemented `Documentrix::Documents::Cache::MemoryCache#move_prefix`,
+  `RedisCache#move_prefix`, and `SQLiteCache#move_prefix` for atomic key
+  mass‑move operations.
+- Updated unit tests to cover the new rename and prefix‑moving functionality.
+- Switched to `GemHadar::SimpleCov` for test coverage.
+- Removed the `redis_backed_memory_cache` implementation and its spec.
+- Added a `.utilsrc` configuration file defining blocks for `search`,
+  `discover`, `strip_spaces`, `probe`, `ssh_tunnel`, `classify`, and
+  `code_indexer`.
+- Reordered Docker `apk add` commands and added friendly echo messages during
+  image build and test phases.
+- Added `fail_fast: true` flag to the Docker file definition.
+- Added interface spec for cache implementations (`memory`, `Redis`, `SQLite`).
+- Included `Set` requirement for older Ruby versions.
+- Removed unused expiry functionality from `RedisCache`.
+- Refactored cache system to use explicit inheritance, moving common methods
+  into `Documentrix::Documents::Cache::Common` and renaming `clear` to
+  `clear_all_with_prefix`.
+- Updated documentation with detailed RDoc comments.
+- Updated CI configuration to use `bundle exec` and cleaned up `Gemfile.lock`.
+- Added `changelog` configuration in `Rakefile` to support `CHANGES.md`.
+
 ## 2025-12-20 v0.0.4
 
 - Added `openssl-dev` to the package list in `.all_images.yml` for Docker
