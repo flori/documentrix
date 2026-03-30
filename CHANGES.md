@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-03-31 v0.1.1
+
+- Improved compatibility and reliability by ensuring the gem uses a stable,
+  newer version **0.1.8** of `sqlite-vec`.
+
 ## 2026-03-29 v0.1.0
 
 - Added `Documentrix::Documents#rename_collection` to rename a collection and
