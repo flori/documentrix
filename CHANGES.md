@@ -1,5 +1,28 @@
 # Changes
 
+## 2026-05-12 v0.2.0
+
+### Added
+
+- Implemented source-based document removal by adding the `remove` method to
+  `Documentrix::Documents`.
+- Added `clear_by_source` to `Documentrix::Documents::Cache::Common` as the
+  default cache implementation.
+- Added an optimized `clear_by_source` override in
+  `Documentrix::Documents::Cache::SQLiteCache` utilizing a direct SQL `DELETE`
+  query.
+
+### Changed
+
+- Updated `documentrix.gemspec` to use `rubygems_version` **4.0.10**.
+- Updated `gem_hadar` dependency to **2.17.1**.
+
+### Testing
+
+- Expanded test coverage in `spec/documents_spec.rb`,
+  `spec/documentrix/documents/cache/interface_spec.rb`, and all specific cache
+  specs.
+
 ## 2026-03-31 v0.1.1
 
 - Improved compatibility and reliability by ensuring the gem uses a stable,
