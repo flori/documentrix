@@ -116,6 +116,19 @@ module Documentrix::Documents::Cache::Common
     self
   end
 
+  # The clear_by_source method removes all records from the cache that
+  # have a source matching the given source.
+  #
+  # @param source [String] the source to filter records by
+  #
+  # @return [self] self
+  def clear_by_source(source)
+    each do |key, record|
+      delete(unpre(key)) if record.source == source
+    end
+    self
+  end
+
   # The clear method removes cached records based on the provided tags or
   # clears all records with the current prefix.
   #

@@ -33,7 +33,7 @@ GemHadar do
   dependency 'infobar',         '~> 0.9'
   dependency 'json',            '~> 2.0'
   dependency 'tins',            '~> 1.34'
-  dependency 'sqlite-vec',      '>= 0.1.8'
+  dependency 'sqlite-vec',      '>= 0.1.9'
   dependency 'sqlite3',         '~> 2.0', '>= 2.0.1'
   dependency 'kramdown-ansi',   '~> 0.0', '>= 0.0.1'
   dependency 'numo-narray-alt', '~> 0.9'

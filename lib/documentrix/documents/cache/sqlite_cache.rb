@@ -157,6 +157,17 @@ class Documentrix::Documents::Cache::SQLiteCache
     self
   end
 
+  # The clear_by_source method removes all records from the cache that
+  # have a source matching the given source.
+  #
+  # @param source [String] the source to filter records by
+  #
+  # @return [Documentrix::Documents::Cache::SQLiteCache] self
+  def clear_by_source(source)
+    execute(%{DELETE FROM records WHERE source = ?}, [ source ])
+    self
+  end
+
   # Move a key prefix in the cache.
   #
   # This operation updates every record whose key starts with +old_prefix+,

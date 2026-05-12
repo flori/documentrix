@@ -219,6 +219,16 @@ class Documentrix::Documents
     self
   end
 
+  # The remove method removes all documents associated with the given source.
+  #
+  # @param source [String] the source of the documents to remove
+  #
+  # @return [Documentrix::Documents] self
+  def remove(source)
+    @cache.clear_by_source(source)
+    self
+  end
+
   # The find method searches for strings within the cache by computing their
   # similarity scores.
   #

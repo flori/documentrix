@@ -158,6 +158,24 @@ describe Documentrix::Documents do
       }.to change { documents.size }.from(1).to(0)
     end
 
+    it 'can remove sources' do
+      allow(ollama).to receive(:embed).at_least(:once).
+        and_return(double(embeddings: [ [ 0.1 ] ]))
+
+      documents.add('foo', source: 'source1')
+      documents.add('bar', source: 'source1')
+      documents.add('baz', source: 'source2')
+
+      expect(documents.size).to eq 3
+
+      documents.remove('source1')
+
+      expect(documents.size).to eq 1
+      expect(documents.exist?('baz')).to be true
+      expect(documents.exist?('foo')).to be false
+      expect(documents.exist?('bar')).to be false
+    end
+
     it 'returns collections' do
       expect(documents.collections).to eq [ :default ]
     end

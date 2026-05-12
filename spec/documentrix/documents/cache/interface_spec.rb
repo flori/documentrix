@@ -52,6 +52,9 @@ describe 'Documentrix::Documents::Cache Interface' do
       expect(cache).to respond_to(:clear_for_tags)
       expect(cache.method(:clear_for_tags).owner).to eq Documentrix::Documents::Cache::Common
 
+      expect(cache).to respond_to(:clear_by_source)
+      expect(cache.method(:clear_by_source).owner).to eq Documentrix::Documents::Cache::Common
+
       expect(cache).to respond_to(:clear)
       expect(cache.method(:clear).owner).to eq Documentrix::Documents::Cache::Common
     end
@@ -107,6 +110,9 @@ describe 'Documentrix::Documents::Cache Interface' do
 
       expect(cache).to respond_to(:clear_for_tags)
       expect(cache.method(:clear_for_tags).owner).to eq Documentrix::Documents::Cache::Common
+
+      expect(cache).to respond_to(:clear_by_source)
+      expect(cache.method(:clear_by_source).owner).to eq Documentrix::Documents::Cache::Common
 
       expect(cache).to respond_to(:clear)
       expect(cache.method(:clear).owner).to eq Documentrix::Documents::Cache::Common
@@ -167,6 +173,9 @@ describe 'Documentrix::Documents::Cache Interface' do
 
       expect(cache).to respond_to(:clear_for_tags)
       expect(cache.method(:clear_for_tags).owner).to eq Documentrix::Documents::Cache::SQLiteCache
+
+      expect(cache).to respond_to(:clear_by_source)
+      expect(cache.method(:clear_by_source).owner).to eq Documentrix::Documents::Cache::SQLiteCache
 
       expect(cache).to respond_to(:clear)
       expect(cache.method(:clear).owner).to eq Documentrix::Documents::Cache::Common

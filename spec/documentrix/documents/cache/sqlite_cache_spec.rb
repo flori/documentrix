@@ -145,6 +145,20 @@ describe Documentrix::Documents::SQLiteCache do
     expect(cache).to be_key 'bar'
   end
 
+  it 'can clear by source' do
+    val1 = test_value.merge(source: 's1')
+    val2 = test_value.merge(source: 's1')
+    val3 = test_value.merge(source: 's2')
+    cache['foo'] = val1
+    cache['bar'] = val2
+    cache['baz'] = val3
+    expect {
+      cache.clear_by_source('s1')
+    }.to change { cache.size }.from(3).to(1)
+    expect(cache.key?('baz')).to be true
+    expect(cache.key?('foo')).to be false
+  end
+
   it 'can return tags' do
     key, value = 'foo', { tags: %w[ foo ], embedding: [ 0.5 ] * 1_024 }
     cache[key] = value

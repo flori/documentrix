@@ -120,6 +120,17 @@ describe Documentrix::Documents::MemoryCache do
     }.from(1).to(0)
   end
 
+  it 'can clear by source' do
+    cache['foo'] = Documentrix::Documents::Record[text: 'foo', source: 's1', embedding: [0.1]]
+    cache['bar'] = Documentrix::Documents::Record[text: 'bar', source: 's1', embedding: [0.1]]
+    cache['baz'] = Documentrix::Documents::Record[text: 'baz', source: 's2', embedding: [0.1]]
+    expect {
+      cache.clear_by_source('s1')
+    }.to change { cache.size }.from(3).to(1)
+    expect(cache.key?('baz')).to be true
+    expect(cache.key?('foo')).to be false
+  end
+
   it 'can iterate over keys under a prefix' do
     cache['foo'] = 'bar'
     expect(cache.to_a).to eq [ %W[ #{prefix}foo bar ] ]

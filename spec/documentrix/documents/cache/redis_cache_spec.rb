@@ -109,6 +109,20 @@ describe Documentrix::Documents::RedisCache do
       expect(cache.clear).to eq cache
     end
 
+    it 'can clear by source' do
+      object_class = Class.new(JSON::GenericObject)
+      cache = described_class.new(prefix:, url: 'something', object_class:)
+      expect(redis).to receive(:scan_each).with(match: 'test-*').and_yield(
+        'test-foo'
+      ).and_yield(
+        'test-bar'
+      )
+      expect(redis).to receive(:get).with('test-foo').and_return(JSON(source: 's1'))
+      expect(redis).to receive(:get).with('test-bar').and_return(JSON(source: 's2'))
+      expect(redis).to receive(:del).with('test-foo')
+      expect(cache.clear_by_source('s1')).to eq cache
+    end
+
     it 'can iterate over keys under a prefix' do
       expect(redis).to receive(:scan_each).with(match: 'test-*')
       cache.to_a
