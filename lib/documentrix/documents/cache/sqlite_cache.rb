@@ -275,34 +275,40 @@ class Documentrix::Documents::Cache::SQLiteCache
   # @param needle [ Array ] the embedding vector
   # @param tags [ Array ] the list of tags to filter by (optional)
   # @param max_records [ Integer ] the maximum number of records to return (optional)
+  # @param min_similarity [ Float ] the minimum similarity score to include (defaults to -1)
   #
   # @yield [ key, value ]
   #
   # @raise [ ArgumentError ] if needle size does not match embedding length
   #
   # @example
-  #   documents.find_records([ 0.1 ] * 1_024, tags: %w[ test ])
+  #   documents.find_records([ 0.1 ] * 1_024, tags: %w[ test ], min_similarity: 0.7)
   #
   # @return [ Array<Documentrix::Documents::Record> ] the list of matching records
-  def find_records(needle, tags: nil, max_records: nil)
+  def find_records(needle, tags: nil, max_records: nil, min_similarity: -1)
     needle.size != @embedding_length and
       raise ArgumentError, "needle embedding length != %s" % @embedding_length
     needle_binary = needle.pack("f*")
     max_records   = [ max_records, size, 4_096 ].compact.min
     records = find_records_for_tags(tags)
     rowids_where = '(%s)' % records.transpose.last&.join(?,)
-    execute(%{
+    execute(
+      %{
       SELECT records.key, records.text, records.norm, records.source,
-        records.tags, embeddings.embedding
+        records.tags, embeddings.embedding,
+        1 - vec_distance_cosine(?, vec_f32(embeddings.embedding)) AS similarity
       FROM records
       INNER JOIN embeddings ON records.embedding_id = embeddings.rowid
       WHERE embeddings.rowid IN #{rowids_where}
-        AND embeddings.embedding MATCH ? AND embeddings.k = ?
-    }, [ needle_binary, max_records ]).map do |key, text, norm, source, tags, embedding|
+        AND embeddings.embedding MATCH ? AND similarity >= ?
+        AND embeddings.k = ?
+      ORDER BY similarity DESC
+      }, [ needle_binary, needle_binary, min_similarity, max_records ]
+    ).map do |key, text, norm, source, tags, embedding, similarity|
       key       = unpre(key)
       embedding = embedding.unpack("f*")
       tags      = Documentrix::Utils::Tags.new(JSON(tags.to_s).to_a, source:)
-      convert_value_to_record(key:, text:, norm:, source:, tags:, embedding:)
+      convert_value_to_record(key:, text:, norm:, source:, tags:, embedding:, similarity:)
     end
   end
 

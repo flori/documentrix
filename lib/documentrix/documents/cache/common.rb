@@ -62,27 +62,29 @@ module Documentrix::Documents::Cache::Common
   # @param needle [ Array ] an array containing the embedding vector
   # @param tags [ String, Array ] a string or array of strings representing the tags to search for
   # @param max_records [ Integer ] the maximum number of records to return
+  # @param min_similarity [ Float ] the minimum similarity score required for a record to be returned (defaults to -1)
   #
-  # @yield [ record ]
-  #
-  # @return [ Array<Documentrix::Documents::Records> ] an array containing the matching records
-  def find_records(needle, tags: nil, max_records: nil)
+  # @return [ Array<Documentrix::Documents::Record> ] an array containing the matching records
+  def find_records(needle, tags: nil, max_records: nil, min_similarity: -1)
     tags    = Documentrix::Utils::Tags.new(Array(tags)).to_a
     records = self
     if tags.present?
       records = records.select { |_key, record| (tags & record.tags).size >= 1 }
     end
+
     needle_norm = norm(needle)
-    records     = records.sort_by { |key, record|
+    records     = records.map do |key, record|
       record.key        = key
       record.similarity = cosine_similarity(
-        a: needle,
-        b: record.embedding,
+        a:      needle,
+        b:      record.embedding,
         a_norm: needle_norm,
         b_norm: record.norm,
       )
-    }
-    records.transpose.last&.reverse.to_a
+      record
+    end.sort_by(&:similarity).reverse.select { _1.similarity >= min_similarity }
+
+    max_records ? records.take(max_records) : records
   end
 
   # Returns a set of unique tags found in the cache records.

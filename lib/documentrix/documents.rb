@@ -236,14 +236,15 @@ class Documentrix::Documents
   # @param tags [Array<String>] an array of tags to filter results by (optional)
   # @param prompt [String] a prompt to use when searching for similar strings (optional)
   # @param max_records [Integer] the maximum number of records to return (optional)
+  # @param min_similarity [Numeric] the minimum similarity score to include in results (defaults to -1)
   #
   # @example
   #   documents.find("foo")
   #
   # @return [Array<Documentrix::Documents::Record>]
-  def find(string, tags: nil, prompt: nil, max_records: nil)
+  def find(string, tags: nil, prompt: nil, max_records: nil, min_similarity: -1)
     needle = convert_to_vector(string, prompt:)
-    @cache.find_records(needle, tags:, max_records: nil)
+    @cache.find_records(needle, tags:, max_records:, min_similarity:)
   end
 
   # The  method filters the records returned by find based on text
@@ -255,6 +256,22 @@ class Documentrix::Documents
   #
   # @example
   #   documents.find_where('foo', text_size: 3, text_count: 1)
+  # @return [Array<Documentrix::Documents::Record>] the filtered records
+
+  # The find_where method filters the records returned by find based on text
+  # size and count.
+  #
+  # @param string [String] the search query
+  # @param text_size [Integer] the maximum allowed total text size to return
+  # @param text_count [Integer] the maximum number of records to return
+  # @param opts [Hash] additional options passed to #find, such as:
+  #   * :tags [Array<String>] filter results by tags
+  #   * :prompt [String] a prompt to use for the search
+  #   * :min_similarity [Numeric] minimum similarity score
+  #
+  # @example
+  #   documents.find_where('foo', text_size: 1000, text_count: 5, tags: ['ruby'])
+  #
   # @return [Array<Documentrix::Documents::Record>] the filtered records
   def find_where(string, text_size: nil, text_count: nil, **opts)
     if text_count
