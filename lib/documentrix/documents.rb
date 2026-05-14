@@ -242,7 +242,8 @@ class Documentrix::Documents
   #   documents.find("foo")
   #
   # @return [Array<Documentrix::Documents::Record>]
-  def find(string, tags: nil, prompt: nil, max_records: nil, min_similarity: -1)
+  def find(string, tags: nil, prompt: nil, max_records: nil, min_similarity: nil)
+    min_similarity ||= -1
     needle = convert_to_vector(string, prompt:)
     @cache.find_records(needle, tags:, max_records:, min_similarity:)
   end
