@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Documentrix::Documents::Splitters::Character do
   let :splitter do
     described_class.new chunk_size: 23, combining_string: ''

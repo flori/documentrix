@@ -1,5 +1,4 @@
 require 'numo/narray'
-require 'digest'
 require 'kramdown/ansi'
 
 class Documentrix::Documents
@@ -59,6 +58,7 @@ require 'documentrix/documents/splitters/semantic'
 class Documentrix::Documents
   include Kramdown::ANSI::Width
   include Documentrix::Documents::Cache
+  include Documentrix::Utils::Digests
 
   # Shortcut for Documentrix::Documents::Cache::Records::Record
   Record = Class.new Documentrix::Documents::Cache::Records::Record
@@ -116,7 +116,6 @@ class Documentrix::Documents
     texts
   end
 
-
   # The  method adds new texts `texts` to the documents collection by
   # processing them through various stages. It first filters out existing texts
   # from the input array using the `prepare_texts` method, then fetches
@@ -139,8 +138,9 @@ class Documentrix::Documents
   #
   # @return [Documentrix::Documents] self
   def add(texts, batch_size: nil, source: nil, tags: [])
-    texts = prepare_texts(texts) or return self
-    tags = Documentrix::Utils::Tags.new(tags, source:)
+    texts  = prepare_texts(texts) or return self
+    source = normalize_source(source)
+    tags   = Documentrix::Utils::Tags.new(tags, source:)
     if source
       tags.add(File.basename(source).gsub(/\?.*/, ''), source:)
     end
@@ -219,13 +219,100 @@ class Documentrix::Documents
     self
   end
 
-  # The remove method removes all documents associated with the given source.
+  # Normalizes the source identifier to a canonical form.
   #
-  # @param source [String] the source of the documents to remove
+  # If the source is blank, returns nil.
+  # If the source is an absolute URL, it is returned as-is.
+  # If the source is a local file path that exists, it is expanded to its real
+  # path, resolving all symlinks and absolute paths.
+  # Otherwise, the original source is returned.
+  #
+  # @param source [String, #to_s] the source identifier to normalize
+  # @return [String, nil] the normalized canonical path, the original source,
+  #   or nil if blank
+  def normalize_source(source)
+    source.blank? and return
+    begin
+      URI::PARSER.parse(source).absolute? and return source
+    rescue
+    end
+    Pathname.new(source).realpath.to_path
+  rescue Errno::ENOENT
+    source
+  end
+
+  # The source_exist? method checks if any records associated with the given
+  # source exist in the cache. If a digest is provided, it verifies if the
+  # source exists and satisfies the comparison with the specified digest.
+  #
+  # @param source [#to_s] the source to check for existence
+  # @param digest [String, nil] the SHA256 hexadecimal digest to compare
+  #   against the stored source digest (optional)
+  # @param operator [Symbol, String] the operator to compare the digest with
+  #   (defaults to '=')
+  #
+  # @return [Boolean] true if the source exists (and satisfies the digest
+  #   comparison if provided), false otherwise.
+  def source_exist?(source, digest: nil, operator: ?=)
+    source = normalize_source(source)
+    @cache.source_exist?(source, digest:, operator:)
+  end
+
+  # Checks if the content of the given source has been modified compared to
+  # the version stored in the cache, or if it is missing from the cache.
+  #
+  # The method is considered modified (returns true) if:
+  # 1. The source is blank or cannot be normalized.
+  # 2. The source is not a valid local file or its digest cannot be computed.
+  # 3. No records exist in the cache for this source.
+  # 4. Records exist in the cache for this source, but they have a different
+  #    digest than the current version on disk.
+  #
+  # @param source [String, #to_s] the source identifier to check
+  # @return [Boolean] true if the source is modified, missing, or cannot be
+  #   verified, false if it is up-to-date.
+  def source_modified?(source)
+    source = normalize_source(source) or return true
+    digest = compute_file_digest(source) or return true
+    !source_exist?(source) || source_exist?(source, digest:, operator: '!=')
+  end
+
+  # Updates the records associated with a given source.
+  #
+  # If the source already exists in the cache, this method computes its current
+  # digest and removes only the stale records that do not match this digest. If
+  # the source is new or has been modified, it adds the provided texts to the
+  # cache.
+  #
+  # @param texts [Array] the text strings to add if the source is new or modified
+  # @param opts [Hash] additional options passed to #add (e.g., :batch_size, :tags)
+  #   * :source [#to_s] the source to update
+  #
+  # @return [Documentrix::Documents, nil] the instance itself if the source
+  #   was added/updated, or nil if the source was already up-to-date.
+  def source_update(texts, **opts)
+    if source = normalize_source(opts[:source]) and source_exist?(source)
+      digest = compute_file_digest(source)
+      source_remove(source, digest:)
+      unless source_exist?(source, digest:, operator: ?=)
+        add(texts, **opts)
+      end
+    else
+      add(texts, **opts)
+    end
+  end
+
+  # The source_remove method removes all documents associated with the given
+  # source.
+  #
+  # @param source [#to_s] the source of the documents to remove
+  # @param digest [String, nil] the SHA256 hexadecimal digest for which records
+  #   with this source are **not** to be removed if given.
   #
   # @return [Documentrix::Documents] self
-  def remove(source)
-    @cache.clear_by_source(source)
+  def source_remove(source, digest: nil)
+    source = normalize_source(source)
+    @cache.clear_by_source(source, digest:, operator: '!=')
     self
   end
 
@@ -351,6 +438,8 @@ class Documentrix::Documents
         debug: @debug
       )
     end
+  rescue => e
+    warn "Caught #{e.class}: #{e}"
   ensure
     cache ||= MemoryCache.new(prefix:,)
     return cache
@@ -407,6 +496,6 @@ class Documentrix::Documents
   #
   # @return [String] the SHA256 hash of the input string
   def key(input)
-    Digest::SHA256.hexdigest(input)
+    compute_digest(input)
   end
 end

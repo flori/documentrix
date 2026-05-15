@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Documentrix::Documents::RedisCache do
   let :prefix do
     'test-'

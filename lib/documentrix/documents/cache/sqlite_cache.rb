@@ -46,17 +46,17 @@ class Documentrix::Documents::Cache::SQLiteCache
     result = execute(
       %{
         SELECT records.key, records.text, records.norm, records.source,
-          records.tags, embeddings.embedding
+          records.digest, records.tags, embeddings.embedding
         FROM records
         INNER JOIN embeddings ON records.embedding_id = embeddings.rowid
         WHERE records.key = ?
       },
       pre(key)
     )&.first or return
-    key, text, norm, source, tags, embedding = *result
+    key, text, norm, source, digest, tags, embedding = *result
     embedding = embedding.unpack("f*")
     tags      = Documentrix::Utils::Tags.new(JSON(tags.to_s).to_a, source:)
-    convert_value_to_record(key:, text:, norm:, source:, tags:, embedding:)
+    convert_value_to_record(key:, text:, norm:, source:, digest:, tags:, embedding:)
   end
 
   # The []= method sets the value for a given key by inserting it into the
@@ -66,15 +66,16 @@ class Documentrix::Documents::Cache::SQLiteCache
   # @param [Hash, Documentrix::Documents::Record] value the hash or record
   #        containing the text, embedding, and other metadata
   def []=(key, value)
-    value = convert_value_to_record(value)
+    value     = convert_value_to_record(value)
+    digest    = compute_file_digest(value.source)
     embedding = value.embedding.pack("f*")
     execute(%{BEGIN})
     execute(%{INSERT INTO embeddings(embedding) VALUES(?)}, [ embedding ])
     embedding_id, = execute(%{ SELECT last_insert_rowid() }).flatten
     execute(%{
-      INSERT INTO records(key,text,embedding_id,norm,source,tags)
-      VALUES(?,?,?,?,?,?)
-    }, [ pre(key), value.text, embedding_id, value.norm, value.source, JSON(value.tags) ])
+      INSERT INTO records(key,text,embedding_id,norm,source,digest,tags)
+      VALUES(?,?,?,?,?,?,?)
+    }, [ pre(key), value.text, embedding_id, value.norm, value.source, digest, JSON(value.tags) ])
     execute(%{COMMIT})
   end
 
@@ -157,15 +158,46 @@ class Documentrix::Documents::Cache::SQLiteCache
     self
   end
 
-  # The clear_by_source method removes all records from the cache that
-  # have a source matching the given source.
+  # Removes all records associated with the specified source from the cache.
   #
-  # @param source [String] the source to filter records by
+  # If a digest is provided, the method will only remove records that do NOT
+  # match this digest. This allows for updating a source by wiping old versions
+  # while preserving records that are already up-to-date.
   #
-  # @return [Documentrix::Documents::Cache::SQLiteCache] self
-  def clear_by_source(source)
-    execute(%{DELETE FROM records WHERE source = ?}, [ source ])
+  # @param source [String] the source identifier used to filter records
+  # @param digest [String, nil] the SHA256 hexadecimal digest of the source.
+  #   Records matching this digest will be preserved.
+  #
+  # @return [self] the cache instance for method chaining
+  def clear_by_source(source, digest: nil, operator: ?=)
+    operator = '!=' if operator != ?=
+    if digest
+      execute(%{DELETE FROM records WHERE source = ? AND digest #{operator} ? }, [ source, digest ])
+    else
+      execute(%{DELETE FROM records WHERE source = ?}, [ source ])
+    end
     self
+  end
+
+  # The source_exist? method checks if any records associated with the given
+  # source exist in the cache. If a digest is provided, it verifies if the
+  # source exists and matches the specified digest using the provided operator.
+  #
+  # @param source [#to_s] the source to check for existence
+  # @param digest [String, nil] the SHA256 hexadecimal digest to compare
+  #   against the stored source digest (optional)
+  # @param operator [String] the operator to use for comparison ('=' or '!=').
+  #   Defaults to '='.
+  #
+  # @return [Boolean] true if the source exists (and matches the digest
+  #   condition if provided), false otherwise.
+  def source_exist?(source, digest: nil, operator: ?=)
+    operator = '!=' if operator != ?=
+    if digest
+      !!execute(%{SELECT 1 FROM records WHERE source = ? AND digest #{operator} ? }, [ source, digest ]).first
+    else
+      !!execute(%{SELECT 1 FROM records WHERE source = ?}, [ source ]).first
+    end
   end
 
   # Move a key prefix in the cache.
@@ -208,14 +240,14 @@ class Documentrix::Documents::Cache::SQLiteCache
 
     execute(%{
       SELECT records.key, records.text, records.norm, records.source,
-        records.tags, embeddings.embedding
+        records.digest, records.tags, embeddings.embedding
       FROM records
       INNER JOIN embeddings ON records.embedding_id = embeddings.rowid
       WHERE records.key LIKE ?
-    }, [ prefix ]).each do |key, text, norm, source, tags, embedding|
+    }, [ prefix ]).each do |key, text, norm, source, digest, tags, embedding|
       embedding = embedding.unpack("f*")
       tags      = Documentrix::Utils::Tags.new(JSON(tags.to_s).to_a, source:)
-      value     = convert_value_to_record(key:, text:, norm:, source:, tags:, embedding:)
+      value     = convert_value_to_record(key:, text:, norm:, source:, digest:, tags:, embedding:)
       block.(key, value)
     end
     self
@@ -295,7 +327,7 @@ class Documentrix::Documents::Cache::SQLiteCache
     execute(
       %{
       SELECT records.key, records.text, records.norm, records.source,
-        records.tags, embeddings.embedding,
+        records.digest, records.tags, embeddings.embedding,
         1 - vec_distance_cosine(?, vec_f32(embeddings.embedding)) AS similarity
       FROM records
       INNER JOIN embeddings ON records.embedding_id = embeddings.rowid
@@ -304,11 +336,11 @@ class Documentrix::Documents::Cache::SQLiteCache
         AND embeddings.k = ?
       ORDER BY similarity DESC
       }, [ needle_binary, needle_binary, min_similarity, max_records ]
-    ).map do |key, text, norm, source, tags, embedding, similarity|
+    ).map do |key, text, norm, source, digest, tags, embedding, similarity|
       key       = unpre(key)
       embedding = embedding.unpack("f*")
       tags      = Documentrix::Utils::Tags.new(JSON(tags.to_s).to_a, source:)
-      convert_value_to_record(key:, text:, norm:, source:, tags:, embedding:, similarity:)
+      convert_value_to_record(key:, text:, norm:, source:, digest:, tags:, embedding:, similarity:)
     end
   end
 
@@ -368,9 +400,17 @@ class Documentrix::Documents::Cache::SQLiteCache
         embedding_id integer,
         norm         float NOT NULL DEFAULT 0.0,
         source       text,
+        digest       text,
         tags         json NOT NULL DEFAULT [],
         FOREIGN KEY(embedding_id) REFERENCES embeddings(id) ON DELETE CASCADE
       )
+    }
+    execute %{
+      CREATE TRIGGER IF NOT EXISTS delete_embedding_after_record AFTER DELETE ON records
+      FOR EACH ROW
+      BEGIN
+        DELETE FROM embeddings WHERE rowid = OLD.embedding_id;
+      END
     }
     nil
   end

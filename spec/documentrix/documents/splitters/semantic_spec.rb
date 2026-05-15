@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Documentrix::Documents::Splitters::Semantic do
   let :ollama do
     double('Ollama::Client')

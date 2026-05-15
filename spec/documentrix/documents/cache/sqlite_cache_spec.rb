@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Documentrix::Documents::SQLiteCache do
   let :prefix do
     'test-'

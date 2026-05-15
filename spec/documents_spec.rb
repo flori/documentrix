@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Documentrix::Documents do
   let :ollama do
     double('Ollama::Client')
@@ -168,7 +166,7 @@ describe Documentrix::Documents do
 
       expect(documents.size).to eq 3
 
-      documents.remove('source1')
+      documents.source_remove('source1')
 
       expect(documents.size).to eq 1
       expect(documents.exist?('baz')).to be true

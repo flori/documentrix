@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Documentrix::Utils::ColorizeTexts do
   it 'colorizes texts' do
     ct = described_class.new(%w[ foo bar ])

@@ -12,6 +12,7 @@
 # memory, Redis, and SQLite.
 module Documentrix::Documents::Cache::Common
   include Documentrix::Utils::Math
+  include Documentrix::Utils::Digests
   include Enumerable
 
   # The initialize method sets up the Documentrix::Documents::Cache instance's
@@ -122,13 +123,46 @@ module Documentrix::Documents::Cache::Common
   # have a source matching the given source.
   #
   # @param source [String] the source to filter records by
+  # @param digest [String, nil] the SHA256 hexadecimal digest of the source.
+  # @param operator [Symbol, String] the operator to compare the digest with ('=' or '!=')
   #
   # @return [self] self
-  def clear_by_source(source)
+  def clear_by_source(source, digest: nil, operator: ?=)
+    operator = '!=' if operator != ?=
+
     each do |key, record|
-      delete(unpre(key)) if record.source == source
+      next unless record.source == source
+      if digest
+        should_delete = record.digest.send(operator, digest)
+        delete(unpre(key)) if should_delete
+      else
+        delete(unpre(key))
+      end
     end
     self
+  end
+
+  # Checks if any records associated with the given source exist in the cache.
+  #
+  # @param source [String] the source to check for existence
+  # @param digest [String, nil] the SHA256 hexadecimal digest to compare against
+  # @param operator [Symbol, String] the operator to compare the digest with ('=' or '!=')
+  #
+  # @return [Boolean] true if a matching record is found, false otherwise.
+  def source_exist?(source, digest: nil, operator: ?=)
+    operator = '!=' if operator != ?=
+
+    each do |_, record|
+      next unless record.source == source
+      if digest
+        if record.digest.send(operator, digest)
+          return true
+        end
+      else
+        return true
+      end
+    end
+    false
   end
 
   # The clear method removes cached records based on the provided tags or

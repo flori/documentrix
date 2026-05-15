@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe 'Documentrix::Documents::Cache Interface' do
   describe 'MemoryCache Interface' do
     let(:cache) { Documentrix::Documents::MemoryCache.new(prefix: 'test-') }
@@ -54,6 +52,9 @@ describe 'Documentrix::Documents::Cache Interface' do
 
       expect(cache).to respond_to(:clear_by_source)
       expect(cache.method(:clear_by_source).owner).to eq Documentrix::Documents::Cache::Common
+
+      expect(cache).to respond_to(:source_exist?)
+      expect(cache.method(:source_exist?).owner).to eq Documentrix::Documents::Cache::Common
 
       expect(cache).to respond_to(:clear)
       expect(cache.method(:clear).owner).to eq Documentrix::Documents::Cache::Common
@@ -113,6 +114,9 @@ describe 'Documentrix::Documents::Cache Interface' do
 
       expect(cache).to respond_to(:clear_by_source)
       expect(cache.method(:clear_by_source).owner).to eq Documentrix::Documents::Cache::Common
+
+      expect(cache).to respond_to(:source_exist?)
+      expect(cache.method(:source_exist?).owner).to eq Documentrix::Documents::Cache::Common
 
       expect(cache).to respond_to(:clear)
       expect(cache.method(:clear).owner).to eq Documentrix::Documents::Cache::Common
@@ -176,6 +180,9 @@ describe 'Documentrix::Documents::Cache Interface' do
 
       expect(cache).to respond_to(:clear_by_source)
       expect(cache.method(:clear_by_source).owner).to eq Documentrix::Documents::Cache::SQLiteCache
+
+      expect(cache).to respond_to(:source_exist?)
+      expect(cache.method(:source_exist?).owner).to eq Documentrix::Documents::Cache::SQLiteCache
 
       expect(cache).to respond_to(:clear)
       expect(cache.method(:clear).owner).to eq Documentrix::Documents::Cache::Common

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Documentrix::Documents::MemoryCache do
   let :prefix do
     'test-'
