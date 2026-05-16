@@ -32,6 +32,7 @@ require 'documentrix/documents/cache/sqlite_cache'
 # to prepare text data for embedding and storage in vector databases.
 module Documentrix::Documents::Splitters
 end
+require 'documentrix/documents/splitters/common'
 require 'documentrix/documents/splitters/character'
 require 'documentrix/documents/splitters/semantic'
 

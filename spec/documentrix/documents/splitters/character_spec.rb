@@ -48,6 +48,26 @@ describe Documentrix::Documents::Splitters::Character do
     expect(result.to_a.join('')).to eq ?A * 25
   end
 
+  context 'with force' do
+    let :splitter do
+      described_class.new chunk_size: 23, combining_string: '', force: true
+    end
+
+    it 'can split with force' do
+      text = [ ?A * 10 ] * 10 * "\n"
+      result = splitter.split(text)
+      expect(result.count).to eq 10
+      expect(result.to_a.join('').count(?A)).to eq text.count(?A)
+    end
+
+    it 'can with force split2' do
+      text = ?A * 25
+      result = splitter.split(text)
+      expect(result.count).to eq 2
+      expect(result.to_a.join('')).to eq ?A * 25
+    end
+  end
+
   it 'can split sentences' do
     text     = "foo.foo. bar!bar! baz?baz? quux.\nquux."
     splitter = described_class.new(separator: /[.!?]\s*(?:\b|\z)/, chunk_size: 2)

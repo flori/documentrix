@@ -13,6 +13,7 @@ module Documentrix::Documents::Splitters
   #   )
   #   chunks = splitter.split(text, breakpoint: :percentile, percentile: 90)
   class Semantic
+    include Documentrix::Documents::Splitters::Common
     include Documentrix::Utils::Math
 
     # The default regex used to identify sentence boundaries for semantic
@@ -30,9 +31,10 @@ module Documentrix::Documents::Splitters
     # @param model_options [Hash, nil] optional parameters passed to the embedding model
     # @param separator [Regexp] the regex used to identify sentence boundaries
     # @param chunk_size [Integer] the maximum character length of a resulting chunk
-    def initialize(ollama:, model:, model_options: nil, separator: DEFAULT_SEPARATOR, chunk_size: 4096)
-      @ollama, @model, @model_options, @separator, @chunk_size =
-        ollama, model, model_options, separator, chunk_size
+    # @param force [Boolean] whether to force split chunks that exceed chunk_size (defaults to false)
+    def initialize(ollama:, model:, model_options: nil, separator: DEFAULT_SEPARATOR, chunk_size: 4096, force: false)
+      @ollama, @model, @model_options, @separator, @chunk_size, @force =
+        ollama, model, model_options, separator, chunk_size, force
     end
 
     # Splits the given text into semantic chunks.
@@ -89,17 +91,17 @@ module Documentrix::Documents::Splitters
           if current_text.size + sentence.size < @chunk_size
             current_text += sentence
           else
-            current_text.empty? or result << current_text
+            result.concat(force_split(current_text))
             current_text = sentence
           end
         end
-        unless current_text.empty?
-          result << current_text
+        if current_text.present?
+          result.concat(force_split(current_text))
           current_text = +''
         end
         sg = g.succ
       end
-      current_text.empty? or result << current_text
+      result.concat(force_split(current_text))
       result
     end
 

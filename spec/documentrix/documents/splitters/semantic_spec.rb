@@ -27,11 +27,11 @@ describe Documentrix::Documents::Splitters::Semantic do
     expect(result.to_a.join('').count(?B)).to eq text.count(?B)
   end
 
-  it 'can split with breakpoint :percentile' do
-    described_class.new ollama:, model: 'mxbai-embed-large', chunk_size: 50
+  it 'can split with breakpoint :percentile, chunk_size 23' do
+    splitter = described_class.new ollama:, model: 'mxbai-embed-large', chunk_size: 23
     text = ([ "A" * 10 ] * 6 + [ "B" * 10 ] * 3 + [ "A" * 10 ] * 3) * ". "
     result = splitter.split(text, breakpoint: :percentile, percentile: 75)
-    expect(result.count).to eq 4
+    expect(result.count).to eq 11
     expect(result.to_a.join('').count(?A)).to eq text.count(?A)
     expect(result.to_a.join('').count(?B)).to eq text.count(?B)
   end
@@ -50,5 +50,19 @@ describe Documentrix::Documents::Splitters::Semantic do
     expect(result.count).to eq 3
     expect(result.to_a.join('').count(?A)).to eq text.count(?A)
     expect(result.to_a.join('').count(?B)).to eq text.count(?B)
+  end
+
+  context 'with force' do
+    let :splitter do
+      described_class.new ollama:, model: 'mxbai-embed-large', chunk_size: 7, force: true
+    end
+
+    it 'can split with force' do
+      text = ([ "A" * 10 ] * 3 + [ "B" * 10 ] * 3 + [ "A" * 10 ] * 3) * ". "
+      result = splitter.split(text, breakpoint: :percentile, percentile: 75)
+      expect(result.count).to eq 18
+      expect(result.to_a.join('').count(?A)).to eq text.count(?A)
+      expect(result.to_a.join('').count(?B)).to eq text.count(?B)
+    end
   end
 end

@@ -1,10 +1,12 @@
 module Documentrix::Documents::Splitters
-  # The Character class provides basic text splitting based on a single separator
-  # and bundles the resulting segments into chunks of a maximum size.
+  # The Character class provides basic text splitting based on a single
+  # separator and bundles the resulting segments into chunks of a maximum size.
   #
   # It allows for the preservation of separators and uses a combining string
   # to join segments back together into chunks.
   class Character
+    include Documentrix::Documents::Splitters::Common
+
     # The default regex used to identify paragraph boundaries.
     # It matches two or more consecutive newline characters (CRLF or LF).
     #
@@ -17,9 +19,10 @@ module Documentrix::Documents::Splitters
     # @param include_separator [Boolean] whether to include the separator in the resulting chunks (defaults to false)
     # @param combining_string [String] the string used to join segments into chunks (defaults to "\n\n")
     # @param chunk_size [Integer] the maximum size of each resulting chunk (defaults to 4096)
-    def initialize(separator: DEFAULT_SEPARATOR, include_separator: false, combining_string: "\n\n", chunk_size: 4096)
-      @separator, @include_separator, @combining_string, @chunk_size =
-        separator, include_separator, combining_string, chunk_size
+    # @param force [Boolean] whether to force-split the final chunk if it exceeds `chunk_size` (defaults to false)
+    def initialize(separator: DEFAULT_SEPARATOR, include_separator: false, combining_string: "\n\n", chunk_size: 4096, force: false)
+      @separator, @include_separator, @combining_string, @chunk_size, @force =
+        separator, include_separator, combining_string, chunk_size, force
       if include_separator
         @separator = Regexp.new("(#@separator)")
       end
@@ -49,7 +52,7 @@ module Documentrix::Documents::Splitters
           current_text = t
         end
       end
-      current_text.empty? or result << current_text
+      result.concat force_split(current_text)
       result
     end
   end
@@ -61,6 +64,8 @@ module Documentrix::Documents::Splitters
   # recursively applies the next separator in the list until the size limit is
   # met or all separators have been exhausted.
   class RecursiveCharacter
+    include Documentrix::Documents::Splitters::Common
+
     # The default priority list of regexes used for recursive splitting.
     # The strategy is to split by the coarsest grain first (paragraphs)
     # and move toward the finest grain (individual characters) as needed.
@@ -87,6 +92,7 @@ module Documentrix::Documents::Splitters
         raise ArgumentError, "non-empty array of separators required"
       @separators, @include_separator, @combining_string, @chunk_size =
         separators, include_separator, combining_string, chunk_size
+      @force = separators.last == //
     end
 
     # Recursively splits the given text into chunks using the list of
