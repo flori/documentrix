@@ -119,6 +119,22 @@ module Documentrix::Documents::Cache::Common
     self
   end
 
+  # Yields each unique, full source present in the cache records.
+  #
+  # @yield [source] the full source string
+  # @return [Enumerator] an enumerator if no block is given, nil otherwise.
+  def each_source(&block)
+    block or return enum_for(__method__)
+    seen = {}
+    each do |_key, record|
+      source = record.source.full? or next
+      seen.key?(source) and next
+      seen[source] = true
+      block.(source)
+    end
+    nil
+  end
+
   # The clear_by_source method removes all records from the cache that
   # have a source matching the given source.
   #

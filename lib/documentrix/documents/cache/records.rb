@@ -27,7 +27,7 @@ module Documentrix::Documents::Cache::Records
     # The to_s method returns a string representation of the object.
     #
     # @return [String] A string containing the text and tags of the record,
-    # along with its similarity score.
+    #   along with its similarity score.
     def to_s
       my_tags = tags_set
       my_tags.empty? or my_tags = " #{my_tags}"

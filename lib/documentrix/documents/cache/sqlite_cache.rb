@@ -200,6 +200,28 @@ class Documentrix::Documents::Cache::SQLiteCache
     end
   end
 
+  # Yields each unique, full source present in the cache records.
+  #
+  # This is a high-performance override for SQLite that avoids loading
+  # embeddings and parsing JSON for every record.
+  #
+  # @yield [source] the full source string
+  # @return [Enumerator] an enumerator if no block is given, nil otherwise.
+  def each_source(&block)
+    block or return enum_for(__method__)
+
+    execute(%{
+      SELECT DISTINCT source
+      FROM records
+      WHERE key LIKE ? AND source IS NOT NULL
+    }, [ "#@prefix%" ]).each do |source|
+      source = source.full? or next
+
+      block.(source)
+    end
+    nil
+  end
+
   # Move a key prefix in the cache.
   #
   # This operation updates every record whose key starts with +old_prefix+,
