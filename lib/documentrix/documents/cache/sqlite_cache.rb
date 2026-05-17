@@ -214,7 +214,7 @@ class Documentrix::Documents::Cache::SQLiteCache
       SELECT DISTINCT source
       FROM records
       WHERE key LIKE ? AND source IS NOT NULL
-    }, [ "#@prefix%" ]).each do |source|
+    }, [ "#@prefix%" ]).each do |source,|
       source = source.full? or next
 
       block.(source)
@@ -348,15 +348,15 @@ class Documentrix::Documents::Cache::SQLiteCache
     rowids_where = '(%s)' % records.transpose.last&.join(?,)
     execute(
       %{
-      SELECT records.key, records.text, records.norm, records.source,
-        records.digest, records.tags, embeddings.embedding,
-        1 - vec_distance_cosine(?, vec_f32(embeddings.embedding)) AS similarity
-      FROM records
-      INNER JOIN embeddings ON records.embedding_id = embeddings.rowid
-      WHERE embeddings.rowid IN #{rowids_where}
-        AND embeddings.embedding MATCH ? AND similarity >= ?
-        AND embeddings.k = ?
-      ORDER BY similarity DESC
+        SELECT records.key, records.text, records.norm, records.source,
+          records.digest, records.tags, embeddings.embedding,
+          1 - vec_distance_cosine(?, vec_f32(embeddings.embedding)) AS similarity
+        FROM records
+        INNER JOIN embeddings ON records.embedding_id = embeddings.rowid
+        WHERE embeddings.rowid IN #{rowids_where}
+          AND embeddings.embedding MATCH ? AND similarity >= ?
+          AND embeddings.k = ?
+        ORDER BY similarity DESC
       }, [ needle_binary, needle_binary, min_similarity, max_records ]
     ).map do |key, text, norm, source, digest, tags, embedding, similarity|
       key       = unpre(key)

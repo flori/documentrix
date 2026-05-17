@@ -260,5 +260,11 @@ describe Documentrix::Documents do
       expect(documents.exist?('bar')).to be true
       expect(documents.exist?('foo')).to be false
     end
+
+    it 'updates the source if it is an URL' do
+      expect(ollama).to receive(:embed).once
+      documents.source_update('foo', source: 'https://www.example.com/s1')
+      expect(documents.exist?('foo')).to be true
+    end
   end
 end

@@ -143,6 +143,20 @@ describe Documentrix::Documents::SQLiteCache do
     expect(cache).to be_key 'bar'
   end
 
+  it 'can clear all without tags' do
+    key, value = 'foo', { tags: %w[ foo ], embedding: [ 0.5 ] * 1_024 }
+    cache[key] = value
+    key, value = 'bar', { embedding: [ 0.5 ] * 1_024 }
+    cache[key] = value
+    expect {
+      expect(cache.clear_for_tags).to eq cache
+    }.to change {
+      cache.size
+    }.from(2).to(0)
+    expect(cache).not_to be_key 'foo'
+    expect(cache).not_to be_key 'bar'
+  end
+
   it 'can clear by source' do
     val1 = test_value.merge(source: 's1')
     val2 = test_value.merge(source: 's1')
@@ -157,6 +171,46 @@ describe Documentrix::Documents::SQLiteCache do
     expect(cache.key?('foo')).to be false
   end
 
+  it 'can clear by source and digest' do
+    allow(cache).to receive(:compute_file_digest).and_return('d1', 'd2', 'd3')
+    cache['foo'] = test_value.merge(source: 's1') # d1
+    cache['bar'] = test_value.merge(source: 's1') # d2
+    cache['baz'] = test_value.merge(source: 's1') # d3
+
+    # Clear those that match d1
+    expect {
+      cache.clear_by_source('s1', digest: 'd1')
+    }.to change { cache.size }.from(3).to(2)
+    expect(cache.key?('foo')).to be false
+    expect(cache.key?('bar')).to be true
+
+    # Clear those that do NOT match d2 (should clear baz)
+    expect {
+      cache.clear_by_source('s1', digest: 'd2', operator: '!=')
+    }.to change { cache.size }.from(2).to(1)
+    expect(cache.key?('baz')).to be false
+    expect(cache.key?('bar')).to be true
+  end
+
+  describe '#source_exist?' do
+    it 'returns true if source exists' do
+      cache['foo'] = test_value
+      expect(cache.source_exist?('for-test.txt')).to be true
+      expect(cache.source_exist?('non-existent')).to be false
+    end
+
+    it 'filters by digest' do
+      allow(cache).to receive(:compute_file_digest).and_return('d1', 'd2')
+      cache['foo'] = test_value.merge(source: 's1') # d1
+      cache['bar'] = test_value.merge(source: 's1') # d2
+
+      expect(cache.source_exist?('s1', digest: 'd1')).to be true
+      expect(cache.source_exist?('s1', digest: 'd3')).to be false
+      expect(cache.source_exist?('s1', digest: 'd1', operator: '!=')).to be true # bar exists
+      expect(cache.source_exist?('s1', digest: 'd2', operator: '!=')).to be true # foo exists
+    end
+  end
+
   it 'can return tags' do
     key, value = 'foo', { tags: %w[ foo ], embedding: [ 0.5 ] * 1_024 }
     cache[key] = value
@@ -165,6 +219,17 @@ describe Documentrix::Documents::SQLiteCache do
     tags = cache.tags
     expect(tags).to be_a Documentrix::Utils::Tags
     expect(tags.to_a).to eq %w[ bar baz foo ]
+  end
+
+  it 'can iterate over unique sources' do
+    val1 = test_value.merge(source: 's1')
+    val2 = test_value.merge(source: 's1')
+    val3 = test_value.merge(source: 's2')
+    cache['foo'] = val1
+    cache['bar'] = val2
+    cache['baz'] = val3
+
+    expect(cache.each_source.to_a).to match_array(['s1', 's2'])
   end
 
   it 'can iterate over keys under a prefix' do
@@ -183,5 +248,68 @@ describe Documentrix::Documents::SQLiteCache do
       ["test-foo", Documentrix::Documents::Record[test_value] ],
       ["test2-bar", Documentrix::Documents::Record[test_value] ],
     ]
+  end
+
+  describe '#find_records' do
+    let(:needle) { [ 0.5 ] * 1_024 }
+
+    it 'raises ArgumentError if needle length is incorrect' do
+      expect {
+        cache.find_records([ 0.1 ])
+      }.to raise_error(ArgumentError, /needle embedding length/)
+    end
+
+    it 'returns the most similar record' do
+      # Record 1: Exact match
+      val1 = test_value.merge(text: 'match', embedding: needle)
+      # Record 2: Different vector
+      val2 = test_value.merge(text: 'diff', embedding: [ 0.1 ] * 1_024)
+
+      cache['r1'] = val1
+      cache['r2'] = val2
+
+      results = cache.find_records(needle)
+
+      expect(results.size).to eq 2
+      expect(results.first.text).to eq 'match'
+      expect(results.first.similarity).to be_within(0.001).of(1.0)
+    end
+
+    it 'filters results by tags' do
+      val1 = test_value.merge(text: 'tagged', tags: %w[ a ], embedding: needle)
+      val2 = test_value.merge(text: 'untagged', tags: %w[ b ], embedding: needle)
+
+      cache['r1'] = val1
+      cache['r2'] = val2
+
+      expect(cache.find_records(needle, tags: %w[ a ]).map(&:text)).to eq %w[ tagged ]
+      expect(cache.find_records(needle, tags: %w[ b ]).map(&:text)).to eq %w[ untagged ]
+      expect(cache.find_records(needle, tags: %w[ c ]).size).to eq 0
+    end
+
+    it 'filters results by min_similarity' do
+      # Exact match
+      cache['r1'] = test_value.merge(text: 'match', embedding: needle)
+      # Very different vector
+      cache['r2'] = test_value.merge(text: 'diff', embedding: [ -0.5 ] * 1_024)
+
+      # Low threshold: both should appear
+      expect(cache.find_records(needle, min_similarity: -1).size).to eq 2
+
+      # High threshold: only match should appear
+      expect(cache.find_records(needle, min_similarity: 0.9).map(&:text)).to eq %w[ match ]
+    end
+
+    it 'limits results via max_records' do
+      3.times do |i|
+        cache["r#{i}"] = test_value.merge(text: "t#{i}", embedding: needle)
+      end
+
+      expect(cache.find_records(needle, max_records: 2).size).to eq 2
+    end
+
+    it 'returns empty array when no records match' do
+      expect(cache.find_records(needle)).to eq []
+    end
   end
 end

@@ -367,19 +367,11 @@ class Documentrix::Documents
   #
   # @return [Array<Documentrix::Documents::Record>] the filtered records
   def find_where(string, text_size: nil, text_count: nil, **opts)
-    if text_count
-      opts[:max_records] =  text_count
-    end
+    text_count and opts[:max_records] =  text_count
     records = find(string, **opts)
-    size, count = 0, 0
+    size    = 0
     records.take_while do |record|
-      if text_size and (size += record.text.size) > text_size
-        next false
-      end
-      if text_count and (count += 1) > text_count
-        next false
-      end
-      true
+      !text_size || (size += record.text.size) <= text_size
     end
   end
 
