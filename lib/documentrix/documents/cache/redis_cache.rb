@@ -23,7 +23,7 @@ class Documentrix::Documents::RedisCache
   # @param [String] prefix the string to be used as the prefix for this cache
   # @param [String] url the URL of the Redis server (default: ENV['REDIS_URL'])
   # @param [Class] object_class the class of objects stored in Redis (default: nil)
-  def initialize(prefix:, url: ENV['REDIS_URL'], object_class: nil)
+  def initialize(prefix:, url: ENV['REDIS_URL'], object_class:)
     super(prefix:)
     url or raise ArgumentError, 'require redis url'
     @url, @object_class = url, object_class
@@ -46,7 +46,7 @@ class Documentrix::Documents::RedisCache
   def [](key)
     value = redis.get(pre(key))
     unless value.nil?
-      object_class ? JSON.parse(value, object_class:) : JSON.parse(value)
+      JSON.parse(value, object_class:)
     end
   end
 
@@ -153,7 +153,7 @@ class Documentrix::Documents::RedisCache
 
     redis.scan_each(match: prefix + ?*) do |key|
       value = redis.get(key) or next
-      value = object_class ? JSON.parse(value, object_class:) : JSON.parse(value)
+      value = JSON.parse(value, object_class:)
       block.(key, value)
     end
   end

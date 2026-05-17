@@ -117,15 +117,16 @@ class Documentrix::Documents
     texts
   end
 
-  # The  method adds new texts `texts` to the documents collection by
+  # The add method adds new texts `texts` to the documents collection by
   # processing them through various stages. It first filters out existing texts
   # from the input array using the `prepare_texts` method, then fetches
   # embeddings for each text using the specified model and options. The fetched
   # embeddings are used to create a new record in the cache, which is
-  # associated with the original text and tags (if any). The method processes
-  # the texts in batches of size , displaying progress information
-  # in the console. It also accepts an optional  string to associate
-  # with the added texts and an array of  to attach to each record. Once
+  # associated with the original text, tags, and version digest (if any). The
+  # method processes the texts in batches of size `batch_size`, displaying
+  # progress information in the console. It also accepts an optional `source`
+  # string to associate with the added texts, an array of `tags` to attach to
+  # each record, and an optional `digest` string for version tracking. Once
   # all texts have been processed, it returns the `Documentrix::Documents`
   # instance itself, allowing for method chaining.
   #
@@ -133,15 +134,17 @@ class Documentrix::Documents
   # @param batch_size [Integer] the number of texts to process in one batch
   # @param source [String] the source URL for the added texts
   # @param tags [Array] an array of tags associated with the added texts
+  # @param digest [String, nil] the SHA256 hexadecimal digest of the source
   #
   # @example
   #   documents.add(%w[ foo bar ], batch_size: 23, source: 'https://example.com', tags: %w[tag1 tag2])
   #
   # @return [Documentrix::Documents] self
-  def add(texts, batch_size: nil, source: nil, tags: [])
-    texts  = prepare_texts(texts) or return self
-    source = normalize_source(source)
-    tags   = Documentrix::Utils::Tags.new(tags, source:)
+  def add(texts, batch_size: nil, source: nil, tags: [], digest: nil)
+    texts    = prepare_texts(texts) or return self
+    source   = normalize_source(source)
+    tags     = Documentrix::Utils::Tags.new(tags, source:)
+    digest ||= compute_file_digest(source)
     if source
       tags.add(File.basename(source).gsub(/\?.*/, ''), source:)
     end
@@ -154,7 +157,7 @@ class Documentrix::Documents
       embeddings = fetch_embeddings(model:, options: @model_options, input: batch)
       batch.zip(embeddings) do |text, embedding|
         norm       = @cache.norm(embedding)
-        self[text] = Record[text:, embedding:, norm:, source:, tags: tags.to_a]
+        self[text] = Record[text:, embedding:, norm:, source:, tags: tags.to_a, digest:]
       end
       infobar.progress by: batch.size
     end
@@ -296,6 +299,7 @@ class Documentrix::Documents
       digest = compute_file_digest(source)
       source_remove(source, digest:)
       unless source_exist?(source, digest:, operator: ?=)
+        opts[:digest] = digest
         add(texts, **opts)
       end
     else

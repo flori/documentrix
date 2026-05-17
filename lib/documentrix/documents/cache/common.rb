@@ -144,7 +144,7 @@ module Documentrix::Documents::Cache::Common
   #
   # @return [self] self
   def clear_by_source(source, digest: nil, operator: ?=)
-    operator = '!=' if operator != ?=
+    operator = operator == '=' ? '==' : '!='
 
     each do |key, record|
       next unless record.source == source
@@ -166,7 +166,7 @@ module Documentrix::Documents::Cache::Common
   #
   # @return [Boolean] true if a matching record is found, false otherwise.
   def source_exist?(source, digest: nil, operator: ?=)
-    operator = '!=' if operator != ?=
+    operator = operator == '=' ? '==' : '!='
 
     each do |_, record|
       next unless record.source == source

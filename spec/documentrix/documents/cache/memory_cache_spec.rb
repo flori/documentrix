@@ -133,4 +133,68 @@ describe Documentrix::Documents::MemoryCache do
     cache['foo'] = 'bar'
     expect(cache.to_a).to eq [ %W[ #{prefix}foo bar ] ]
   end
+
+  it 'can iterate over unique sources' do
+    cache['foo'] = Documentrix::Documents::Record[text: 'foo', source: 's1', embedding: [0.1]]
+    cache['bar'] = Documentrix::Documents::Record[text: 'bar', source: 's1', embedding: [0.1]]
+    cache['baz'] = Documentrix::Documents::Record[text: 'baz', source: 's2', embedding: [0.1]]
+
+    expect(cache.each_source.to_a).to match_array(['s1', 's2'])
+  end
+
+  it 'can retrieve all unique tags' do
+    cache['foo'] = Documentrix::Documents::Record[text: 'foo', source: 's1', tags: ['a', 'b'], embedding: [0.1]]
+    cache['bar'] = Documentrix::Documents::Record[text: 'bar', source: 's2', tags: ['b', 'c'], embedding: [0.1]]
+
+    expect(cache.tags.to_a).to match_array(['a', 'b', 'c'])
+  end
+
+  it 'can clear records by tags' do
+    cache['foo'] = Documentrix::Documents::Record[text: 'foo', source: 's1', tags: ['keep'], embedding: [0.1]]
+    cache['bar'] = Documentrix::Documents::Record[text: 'bar', source: 's1', tags: ['trash'], embedding: [0.1]]
+
+    expect {
+      cache.clear_for_tags(['trash'])
+    }.to change { cache.size }.from(2).to(1)
+    expect(cache.key?('foo')).to be true
+    expect(cache.key?('bar')).to be false
+  end
+
+  it 'can check if a source exists' do
+    cache['foo'] = Documentrix::Documents::Record[text: 'foo', source: 's1', embedding: [0.1]]
+
+    expect(cache.source_exist?('s1')).to be true
+    expect(cache.source_exist?('s2')).to be false
+  end
+
+  it 'can clear by source with a specific digest' do
+    cache['f1'] = Documentrix::Documents::Record[text: 'v1', source: 's1', digest: 'd1', embedding: [0.1]]
+    cache['f2'] = Documentrix::Documents::Record[text: 'v2', source: 's1', digest: 'd2', embedding: [0.1]]
+
+    expect {
+      cache.clear_by_source('s1', digest: 'd1')
+    }.to change { cache.size }.from(2).to(1)
+    expect(cache.key?('f2')).to be true
+    expect(cache.key?('f1')).to be false
+  end
+
+  it 'can clear outdated versions of a source' do
+    cache['f1'] = Documentrix::Documents::Record[text: 'v1', source: 's1', digest: 'd1', embedding: [0.1]]
+    cache['f2'] = Documentrix::Documents::Record[text: 'v2', source: 's1', digest: 'd2', embedding: [0.1]]
+
+    expect {
+      cache.clear_by_source('s1', digest: 'd2', operator: '!=')
+    }.to change { cache.size }.from(2).to(1)
+    expect(cache.key?('f2')).to be true
+    expect(cache.key?('f1')).to be false
+  end
+
+  it 'can check if a source exists with a specific digest' do
+    cache['f1'] = Documentrix::Documents::Record[text: 'v1', source: 's1', digest: 'd1', embedding: [0.1]]
+
+    expect(cache.source_exist?('s1', digest: 'd1')).to be true
+    expect(cache.source_exist?('s1', digest: 'd2')).to be false
+    expect(cache.source_exist?('s1', digest: 'd1', operator: '!=')).to be false
+    expect(cache.source_exist?('s1', digest: 'd2', operator: '!=')).to be true
+  end
 end

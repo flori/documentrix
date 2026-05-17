@@ -62,7 +62,13 @@ describe 'Documentrix::Documents::Cache Interface' do
   end
 
   describe 'RedisCache Interface' do
-    let(:cache) { Documentrix::Documents::RedisCache.new(prefix: 'test-', url: 'redis://localhost:6379') }
+    let :object_class do
+      Documentrix::Documents::Cache::Records::Record
+    end
+
+    let(:cache) do
+      Documentrix::Documents::RedisCache.new(prefix: 'test-', url: 'redis://localhost:6379', object_class:)
+    end
 
     it 'has proper method resolution' do
       # Basic cache operations

@@ -209,4 +209,56 @@ describe Documentrix::Documents do
         to(:new_collection)
     end
   end
+
+  context 'source management' do
+    before do
+      allow(documents).to receive(:compute_file_digest).and_return('d1')
+      allow(documents.cache).to receive(:compute_file_digest).and_return('d1')
+
+      allow(ollama).to receive(:embed).and_return(double(embeddings: [[0.1]]))
+    end
+
+    it 'can check if a source exists' do
+      documents.add('foo', source: 's1')
+      expect(documents.source_exist?('s1')).to be true
+      expect(documents.source_exist?('s2')).to be false
+    end
+
+    it 'can determine if a source is modified' do
+      documents.add('foo', source: 's1')
+
+      # Case 1: Source is up to date
+      expect(documents.source_modified?('s1')).to be false
+
+      # Case 2: Source is missing
+      expect(documents.source_modified?('s2')).to be true
+
+      # Case 3: Digest changed - mock both to return the new digest
+      allow(documents).to receive(:compute_file_digest).with('s1').and_return('d2')
+      allow(documents.cache).to receive(:compute_file_digest).with('s1').and_return('d2')
+      expect(documents.source_modified?('s1')).to be true
+    end
+
+    it 'does not update the source if the digest matches' do
+      documents.add('foo', source: 's1')
+
+      expect(ollama).not_to receive(:embed)
+      documents.source_update(['foo'], source: 's1')
+      expect(documents.exist?('foo')).to be true
+    end
+
+    it 'updates the source if the digest has changed' do
+      documents.add('foo', source: 's1')
+
+      # Simulate a file change by updating the digest
+      allow(documents).to receive(:compute_file_digest).with('s1').and_return('d2')
+      allow(documents.cache).to receive(:compute_file_digest).with('s1').and_return('d2')
+
+      expect(ollama).to receive(:embed).once
+      documents.source_update(['bar'], source: 's1')
+
+      expect(documents.exist?('bar')).to be true
+      expect(documents.exist?('foo')).to be false
+    end
+  end
 end

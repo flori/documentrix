@@ -1,24 +1,18 @@
 describe Documentrix::Documents::RedisCache do
+  let :object_class do
+    Documentrix::Documents::Cache::Records::Record
+  end
+
   let :prefix do
     'test-'
   end
 
   let :cache do
-    described_class.new prefix:, url: 'something'
+    described_class.new prefix:, url: 'something', object_class:
   end
 
   it 'can be instantiated' do
     expect(cache).to be_a described_class
-  end
-
-  it 'defaults to nil object_class' do
-    expect(cache.object_class).to be_nil
-  end
-
-  it 'can be configured with object_class' do
-    object_class = Class.new(JSON::GenericObject)
-    cache = described_class.new(prefix:, url: 'something', object_class:)
-    expect(cache.object_class).to eq object_class
   end
 
   it 'raises ArgumentError if url is missing' do
@@ -34,6 +28,10 @@ describe Documentrix::Documents::RedisCache do
 
     before do
       allow_any_instance_of(described_class).to receive(:redis).and_return(redis)
+    end
+
+    it 'can be configured with object_class' do
+      expect(cache.object_class).to eq object_class
     end
 
     it 'has Redis client' do
@@ -60,9 +58,9 @@ describe Documentrix::Documents::RedisCache do
     end
 
     it 'can move prefixes' do
-      expect(redis).to receive(:get).with(prefix + 'foo').and_return(JSON(foo: true))
-      expect(redis).to receive(:get).with('test2-bar').and_return(JSON(foo: true))
-      expect(redis).to receive(:set).with('test3-foo', '{"foo":true}')
+      expect(redis).to receive(:get).with(prefix + 'foo').and_return(object_class[foo: true].to_json)
+      expect(redis).to receive(:get).with('test2-bar').and_return(object_class[foo: true].to_json)
+      expect(redis).to receive(:set).with('test3-foo', /"foo":true/)
       expect(redis).to receive(:del).with('test-foo')
       expect(redis).to receive(:scan_each).with(match: ?*).
         and_yield("#{prefix}foo").
@@ -79,12 +77,12 @@ describe Documentrix::Documents::RedisCache do
     end
 
     it 'can iterate over keys, values' do
-      key, value = 'foo', { 'test' => true }
-      expect(redis).to receive(:set).with(prefix + key, JSON(value))
+      key, value = 'foo', object_class[test: true]
+      expect(redis).to receive(:set).with(prefix + key, object_class[value].to_json)
       cache[key] = value
       expect(redis).to receive(:scan_each).with(match: "#{prefix}*").
         and_yield("#{prefix}foo")
-      expect(redis).to receive(:get).with(prefix + key).and_return(JSON(test: true))
+      expect(redis).to receive(:get).with(prefix + key).and_return(object_class[test: true].to_json)
       cache.each do |k, v|
         expect(k).to eq prefix + key
         expect(v).to eq value
@@ -132,6 +130,59 @@ describe Documentrix::Documents::RedisCache do
 
     it 'can remove prefix with unpre' do
       expect(cache.unpre('test-foo')).to eq 'foo'
+    end
+
+    it 'can iterate over unique sources' do
+      expect(redis).to receive(:scan_each).with(match: "#{prefix}*").and_yield(
+        "#{prefix}foo"
+      ).and_yield(
+        "#{prefix}bar"
+      )
+      expect(redis).to receive(:get).with("#{prefix}foo").and_return(JSON(source: 's1'))
+      expect(redis).to receive(:get).with("#{prefix}bar").and_return(JSON(source: 's2'))
+
+      expect(cache.each_source.to_a).to match_array(['s1', 's2'])
+    end
+
+    it 'can retrieve all unique tags' do
+      expect(redis).to receive(:scan_each).with(match: "#{prefix}*").and_yield(
+        "#{prefix}foo"
+      ).and_yield(
+        "#{prefix}bar"
+      )
+      expect(redis).to receive(:get).with("#{prefix}foo").and_return(JSON(source: 's1', tags: ['a', 'b']))
+      expect(redis).to receive(:get).with("#{prefix}bar").and_return(JSON(source: 's2', tags: ['b', 'c']))
+
+      expect(cache.tags.to_a).to match_array(['a', 'b', 'c'])
+    end
+
+    it 'can clear records by tags' do
+      expect(redis).to receive(:scan_each).with(match: "#{prefix}*").and_yield(
+        "#{prefix}foo"
+      ).and_yield(
+        "#{prefix}bar"
+      )
+      expect(redis).to receive(:get).with("#{prefix}foo").and_return(JSON(source: 's1', tags: ['trash']))
+      expect(redis).to receive(:get).with("#{prefix}bar").and_return(JSON(source: 's2', tags: ['keep']))
+      expect(redis).to receive(:del).with("#{prefix}foo")
+
+      expect(cache.clear_for_tags(['trash'])).to eq cache
+    end
+
+    it 'can check if a source exists with a specific digest' do
+      expect(redis).to receive(:scan_each).with(match: "#{prefix}*").and_yield(
+        "#{prefix}foo"
+      )
+      expect(redis).to receive(:get).with("#{prefix}foo").and_return(JSON(source: 's1', digest: 'd1'))
+
+      expect(cache.source_exist?('s1', digest: 'd1')).to be true
+
+      # Reset for the negative case
+      expect(redis).to receive(:scan_each).with(match: "#{prefix}*").and_yield(
+        "#{prefix}foo"
+      )
+      expect(redis).to receive(:get).with("#{prefix}foo").and_return(JSON(source: 's1', digest: 'd1'))
+      expect(cache.source_exist?('s1', digest: 'd2')).to be false
     end
   end
 end
