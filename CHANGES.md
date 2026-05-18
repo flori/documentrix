@@ -1,5 +1,74 @@
 # Changes
 
+## 2026-05-17 v0.3.0
+
+### New Features
+
+- **Source Tracking & Versioning**:
+    - Introduced `Documentrix::Utils::Digests` for SHA256 hashing of strings
+      and files, including an `mtime`-based cache.
+    - Implemented source-based document management in `Documentrix::Documents`
+      via `normalize_source`, `source_exist?`, `source_modified?`,
+      `source_update`, and `source_remove`.
+    - Updated `Documentrix::Documents#add` and
+      `Documentrix::Documents#source_update` to support `digest` for version
+      tracking.
+- **Text Splitting**:
+    - Added `Documentrix::Documents::Splitters::Common` to implement
+      `force_split` behavior.
+    - Integrated `force` splitting into `Character`, `RecursiveCharacter`, and
+      `Semantic` splitters.
+- **Cache Enhancements**:
+    - Added `each_source` to `Documentrix::Documents::Cache::Common` and an
+      optimized `SELECT DISTINCT source` implementation in
+      `Documentrix::Documents::Cache::SQLiteCache`.
+    - Added a SQLite trigger `delete_embedding_after_record` to automatically
+      clean the `embeddings` table.
+
+### Improvements & Refactorings
+
+- **Search & Retrieval**:
+    - Added `min_similarity` parameter to `Documentrix::Documents#find`,
+      `Documentrix::Documents::Cache::Common#find_records`, and
+      `Documentrix::Documents::Cache::SQLiteCache#find_records`.
+    - Optimized `Documentrix::Documents::Cache::SQLiteCache#find_records` by
+      moving similarity calculations into the SQL query using `1 -
+      vec_distance_cosine`.
+    - Simplified `Documentrix::Documents#find_where` by streamlining
+      `take_while` logic and utilizing `opts[:max_records]`.
+- **Cache Implementations**:
+    - Made `object_class` a required keyword argument in
+      `Documentrix::Documents::RedisCache#initialize`.
+    - Refactored `Documentrix::Documents::Cache::Common#clear_by_source` and
+      `Documentrix::Documents::Cache::Common#source_exist?` to use ternary
+      operators.
+    - Improved `Documentrix::Documents::Cache::SQLiteCache#each_source` and
+      `Documentrix::Documents::Cache::SQLiteCache#find_records` for better
+      robustness and formatting.
+- **Documentation & Tooling**:
+    - Expanded YARD documentation for
+      `Documentrix::Documents::Splitters::Character`, `RecursiveCharacter`,
+      `Semantic`, and `Documentrix::Utils::ColorizeTexts`.
+    - Centralized RSpec configuration via a `.rspec` file.
+
+### Bug Fixes
+
+- Fixed an issue in `Documentrix::Documents#find` where `max_records` was
+  hardcoded to `nil` when calling the cache.
+- Adjusted default handling of `min_similarity` in
+  `Documentrix::Documents#find` to use `min_similarity ||= -1` within the
+  method body.
+
+### Testing
+
+- Significantly expanded test suites for `SQLiteCache`, `MemoryCache`, and
+  `RedisCache`, specifically covering `each_source`, `tags`, `clear_for_tags`,
+  and digest-based checks.
+- Added new test cases in `spec/documents_spec.rb` for source management and
+  `Documentrix::Documents#source_update`.
+- Added `spec/utils/digests_spec.rb` and updated splitter specs to verify
+  `force` splitting behavior.
+
 ## 2026-05-12 v0.2.0
 
 ### Added
