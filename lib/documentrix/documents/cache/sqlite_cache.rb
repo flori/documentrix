@@ -114,7 +114,7 @@ class Documentrix::Documents::Cache::SQLiteCache
     result = Documentrix::Utils::Tags.new
     execute(%{
         SELECT DISTINCT(tags) FROM records WHERE key LIKE ?
-      }, [ "#@prefix%" ]
+      }, [ start_with_prefix ]
     ).flatten.each do
       JSON(_1).each { |t| result.add(t) }
     end
@@ -126,7 +126,10 @@ class Documentrix::Documents::Cache::SQLiteCache
   #
   # @return [ Integer ] the count of records
   def size
-    execute(%{SELECT COUNT(*) FROM records WHERE key LIKE ?}, [ "#@prefix%" ]).flatten.first
+    execute(
+      %{SELECT COUNT(*) FROM records WHERE key LIKE ?},
+      [ start_with_prefix ]
+    ).flatten.first
   end
 
   # The clear_for_tags method clears the cache for specific tags by deleting
@@ -154,7 +157,7 @@ class Documentrix::Documents::Cache::SQLiteCache
   #
   # @return [ Documentrix::Documents::RedisBackedMemoryCache ] self
   def clear_all_with_prefix
-    execute(%{DELETE FROM records WHERE key LIKE ?}, [ "#@prefix%" ])
+    execute(%{DELETE FROM records WHERE key LIKE ?}, [ start_with_prefix ])
     self
   end
 
@@ -172,9 +175,21 @@ class Documentrix::Documents::Cache::SQLiteCache
   def clear_by_source(source, digest: nil, operator: ?=)
     operator = '!=' if operator != ?=
     if digest
-      execute(%{DELETE FROM records WHERE source = ? AND digest #{operator} ? }, [ source, digest ])
+      execute(
+        %{
+          DELETE FROM records
+          WHERE key LIKE ? AND source = ? AND digest #{operator} ?
+        },
+        [ start_with_prefix, source, digest ]
+      )
     else
-      execute(%{DELETE FROM records WHERE source = ?}, [ source ])
+      execute(
+        %{
+          DELETE FROM records
+          WHERE key LIKE ? AND source = ?
+        },
+        [ start_with_prefix, source ]
+      )
     end
     self
   end
@@ -194,9 +209,19 @@ class Documentrix::Documents::Cache::SQLiteCache
   def source_exist?(source, digest: nil, operator: ?=)
     operator = '!=' if operator != ?=
     if digest
-      !!execute(%{SELECT 1 FROM records WHERE source = ? AND digest #{operator} ? }, [ source, digest ]).first
+      !!execute(
+        %{
+          SELECT 1 FROM records WHERE key LIKE ? AND source = ? AND digest #{operator} ?
+        },
+        [ start_with_prefix, source, digest ]
+      ).first
     else
-      !!execute(%{SELECT 1 FROM records WHERE source = ?}, [ source ]).first
+      !!execute(
+        %{
+          SELECT 1 FROM records WHERE key LIKE ? AND source = ?
+        },
+        [ start_with_prefix, source ]
+      ).first
     end
   end
 
@@ -211,10 +236,9 @@ class Documentrix::Documents::Cache::SQLiteCache
     block or return enum_for(__method__)
 
     execute(%{
-      SELECT DISTINCT source
-      FROM records
+      SELECT DISTINCT source FROM records
       WHERE key LIKE ? AND source IS NOT NULL
-    }, [ "#@prefix%" ]).each do |source,|
+    }, [ start_with_prefix ]).each do |source,|
       source = source.full? or next
 
       block.(source)
@@ -257,7 +281,7 @@ class Documentrix::Documents::Cache::SQLiteCache
   #   cache.each do |key, value|
   #     puts "#{key}: #{value}"
   #   end
-  def each(prefix: "#@prefix%", &block)
+  def each(prefix: start_with_prefix, &block)
     block or return enum_for(__method__, prefix:)
 
     execute(%{
@@ -315,7 +339,7 @@ class Documentrix::Documents::Cache::SQLiteCache
       SELECT key, tags, embedding_id
       FROM records
       WHERE key LIKE ?#{tags_where}
-    }, [ "#@prefix%" ])
+    }, [ start_with_prefix ])
     if tags_filter
       records = records.select { |key, tags, embedding_id|
         (tags_filter & JSON(tags.to_s).to_a).size >= 1
@@ -367,6 +391,13 @@ class Documentrix::Documents::Cache::SQLiteCache
   end
 
   private
+
+  # Returns the SQL LIKE pattern for records starting with the current prefix.
+  #
+  # @return [ String ] the prefix pattern used in SQL WHERE clauses
+  def start_with_prefix
+    "#@prefix%"
+  end
 
   # The execute method executes an SQL query on the database by calling the
   # \@database.execute method.

@@ -250,6 +250,47 @@ describe Documentrix::Documents::SQLiteCache do
     ]
   end
 
+  describe 'Prefix Isolation' do
+    let(:cache2) { cache.dup }
+
+    before do
+      cache2.prefix = 'other-'
+
+      # Setup shared sources and tags across prefixes
+      cache['foo'] = test_value.merge(source: 'shared.txt', tags: %w[ a ])
+      cache2['bar'] = test_value.merge(source: 'shared.txt', tags: %w[ a ])
+    end
+
+    it 'does not leak clear_by_source' do
+      expect {
+        cache.clear_by_source('shared.txt')
+      }.to change { cache.size }.from(1).to(0)
+
+      expect(cache2.size).to eq 1
+      expect(cache2.key?('bar')).to be true
+    end
+
+    it 'does not leak source_exist?' do
+      # Ensure we are checking a source that ONLY exists in the other prefix
+      cache.clear_all_with_prefix
+      cache2['baz'] = test_value.merge(source: 'only-in-2.txt')
+
+      expect(cache.source_exist?('only-in-2.txt')).to be false
+      expect(cache2.source_exist?('only-in-2.txt')).to be true
+    end
+
+    it 'does not leak tags' do
+      cache.clear_all_with_prefix
+      cache2.clear_all_with_prefix
+
+      cache['foo'] = test_value.merge(tags: %w[ prefix1 ])
+      cache2['bar'] = test_value.merge(tags: %w[ prefix2 ])
+
+      expect(cache.tags.to_a).to match_array(['prefix1'])
+      expect(cache2.tags.to_a).to match_array(['prefix2'])
+    end
+  end
+
   describe '#find_records' do
     let(:needle) { [ 0.5 ] * 1_024 }
 
