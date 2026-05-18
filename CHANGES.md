@@ -1,5 +1,16 @@
 # Changes
 
+## 2026-05-18 v0.3.1
+
+- Fixed scoping bugs in `clear_by_source` and `source_exist?` by implementing a
+  `key LIKE ?` constraint.
+- Added regression tests for prefix isolation in
+  `spec/documentrix/documents/cache/sqlite_cache_spec.rb`.
+- Introduced the `start_with_prefix` method in
+  `lib/documentrix/documents/cache/sqlite_cache.rb` to unify prefix patterns.
+- Updated `tags`, `size`, `clear_all_with_prefix`, and `each` to utilize the
+  new `start_with_prefix` method.
+
 ## 2026-05-17 v0.3.0
 
 ### New Features
