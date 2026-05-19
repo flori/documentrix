@@ -443,18 +443,18 @@ class Documentrix::Documents::Cache::SQLiteCache
     @database.enable_load_extension(false)
     execute %{
       CREATE VIRTUAL TABLE IF NOT EXISTS embeddings USING vec0(
-        embedding float[#@embedding_length]
+        embedding FLOAT[#@embedding_length]
       )
     }
     execute %{
       CREATE TABLE IF NOT EXISTS records (
-        key          text NOT NULL PRIMARY KEY ON CONFLICT REPLACE,
-        text         text NOT NULL DEFAULT '',
-        embedding_id integer,
-        norm         float NOT NULL DEFAULT 0.0,
-        source       text,
-        digest       text,
-        tags         json NOT NULL DEFAULT [],
+        key          TEXT NOT NULL PRIMARY KEY ON CONFLICT REPLACE,
+        text         TEXT NOT NULL DEFAULT '',
+        embedding_id INTEGER,
+        norm         FLOAT NOT NULL DEFAULT 0.0,
+        source       TEXT,
+        digest       TEXT,
+        tags         JSON NOT NULL DEFAULT [],
         FOREIGN KEY(embedding_id) REFERENCES embeddings(id) ON DELETE CASCADE
       )
     }
