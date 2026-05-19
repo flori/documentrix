@@ -1,5 +1,28 @@
 # Changes
 
+## 2026-05-20 v0.3.2
+
+### Performance Improvements
+
+- Optimized collections lookup by memoizing
+  `Documentrix::Documents#collections` using `@collections_cache`.
+- Added `Documentrix::Documents#invalidate_collections_cache!` to reset the
+  memoized list.
+- Integrated `invalidate_collections_cache!` into `add`, `delete`, `clear`,
+  `source_remove`, and `rename_collection` to maintain cache consistency.
+
+### Database & Cache
+
+- Standardized SQL keyword casing to uppercase for data types (e.g., `FLOAT`,
+  `TEXT`, `INTEGER`, `JSON`) within `SQLiteCache`.
+
+### Documentation & Testing
+
+- Refined documentation and return type descriptions for
+  `Documentrix::Documents#find` and `Documentrix::Documents#prefix`.
+- Updated `spec/documents_spec.rb` to ensure `invalidate_collections_cache!` is
+  correctly triggered during mutations.
+
 ## 2026-05-18 v0.3.1
 
 - Fixed scoping bugs in `clear_by_source` and `source_exist?` by implementing a
