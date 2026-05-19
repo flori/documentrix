@@ -162,7 +162,7 @@ class Documentrix::Documents
       infobar.progress by: batch.size
     end
     infobar.newline
-    self
+    invalidate_collections_cache!
   end
   alias << add
 
@@ -201,7 +201,9 @@ class Documentrix::Documents
   # @return [ FalseClass, TrueClass ] true if the text was removed, false
   #         otherwise.
   def delete(text)
-    @cache.delete(key(text))
+    res = @cache.delete(key(text))
+    invalidate_collections_cache! if res
+    res
   end
 
   # The size method returns the number of texts stored in the cache of this
@@ -220,7 +222,7 @@ class Documentrix::Documents
   # @return [ Documentrix::Documents ] self
   def clear(tags: nil)
     @cache.clear(tags:)
-    self
+    invalidate_collections_cache!
   end
 
   # Normalizes the source identifier to a canonical form.
@@ -318,7 +320,7 @@ class Documentrix::Documents
   def source_remove(source, digest: nil)
     source = normalize_source(source)
     @cache.clear_by_source(source, digest:, operator: '!=')
-    self
+    invalidate_collections_cache!
   end
 
   # The find method searches for strings within the cache by computing their
@@ -359,7 +361,7 @@ class Documentrix::Documents
   # @param text_count [Integer] the maximum number of records to return
   # @param opts [Hash] additional options passed to #find, such as:
   #   * :tags [Array<String>] filter results by tags
-  #   * :prompt [String] a prompt to use for the search
+  #   * :prompt [String] use for the search
   #   * :min_similarity [Numeric] minimum similarity score
   #
   # @example
@@ -379,7 +381,9 @@ class Documentrix::Documents
   #
   # @return [Array] An array of unique collection names
   def collections
-    ([ default_collection ] + @cache.collections('%s-' % class_prefix)).uniq
+    @collections_cache ||= (
+      [ default_collection ] + @cache.collections('%s-' % class_prefix)
+    ).uniq
   end
 
   # Rename the current collection, moving all keys from the old prefix to a new
@@ -395,6 +399,7 @@ class Documentrix::Documents
     new_prefix = '%s-%s-' % [ class_prefix, new_collection ]
     @cache.move_prefix(prefix, new_prefix)
     self.collection = new_collection
+    invalidate_collections_cache!
   end
 
   # The tags method returns an array of unique tags from the cache.
@@ -405,6 +410,18 @@ class Documentrix::Documents
   end
 
   private
+
+  # Resets the memoized list of collections.
+  #
+  # This is called whenever a mutation occurs that could change the set of
+  # existing collections, ensuring that the #collections method returns a
+  # fresh, accurate list on the next call.
+  #
+  # @return [ Documentrix::Documents ] self
+  def invalidate_collections_cache!
+    @collections_cache = nil
+    self
+  end
 
   # The connect_cache method initializes and returns an instance of the
   # specified cache class.
@@ -482,7 +499,7 @@ class Documentrix::Documents
   # The prefix method returns a string that is used as the prefix for keys in
   # the cache of the currently configured collection.
   #
-  # @return [ String ] The prefix string
+  # @return [ String ] the prefix string
   def prefix
     '%s-%s-' % [ class_prefix, @collection ]
   end
