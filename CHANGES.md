@@ -1,5 +1,23 @@
 # Changes
 
+## 2026-05-22 v0.4.0
+
+### Added
+
+- Added introspection methods to `Documents`:
+    - Implemented `sources` to return an array of unique source identifiers.
+    - Implemented `each_record` to iterate over records, returning an
+      `Enumerator` if no block is provided.
+
+### Changed
+
+- Updated CI images from Alpine to Debian:
+    - Switched Ruby **4.0**, **3.4**, **3.3**, and **3.2** images to the
+      `trixie` distribution.
+    - Switched Ruby **3.1** image to the `bookworm` distribution.
+    - Updated the `dockerfile` in `.all_images.yml` to use `apt-get` instead of
+      `apk` for installing build dependencies.
+
 ## 2026-05-20 v0.3.2
 
 ### Performance Improvements
