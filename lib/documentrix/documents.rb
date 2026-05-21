@@ -409,6 +409,22 @@ class Documentrix::Documents
     @cache.tags
   end
 
+  # Returns an array of all unique sources stored in the cache.
+  #
+  # @return [Array<String>] An array of unique source identifiers.
+  def sources
+    @cache.each_source.to_a
+  end
+
+ # The each_record method iterates over all records stored in the cache.
+ #
+ # @yield [record] The record being iterated over.
+ # @return [ Enumerator ] an enumerator if no block is provided.
+  def each_record(&block)
+    block or return enum_for(__method__)
+    @cache.each { |_key, record| block.(record) }
+  end
+
   private
 
   # Resets the memoized list of collections.

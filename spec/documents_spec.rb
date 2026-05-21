@@ -226,6 +226,32 @@ describe Documentrix::Documents do
         from(:default).
         to(:new_collection)
     end
+
+    it 'returns unique sources' do
+      allow(ollama).to receive(:embed).and_return(double(embeddings: [ [ 0.1 ] ]))
+      documents.add('foo', source: 's1')
+      documents.add('bar', source: 's1')
+      documents.add('baz', source: 's2')
+      expect(documents.sources).to match_array %w[ s1 s2 ]
+    end
+
+    it 'can iterate over records' do
+      allow(ollama).to receive(:embed).and_return(double(embeddings: [ [ 0.1 ] ]))
+      documents.add('foo')
+      documents.add('bar')
+      records = []
+      documents.each_record { |r| records << r }
+      expect(records.size).to eq 2
+      expect(records.map(&:text)).to match_array %w[ foo bar ]
+    end
+
+    it 'returns an enumerator for each_record' do
+      allow(ollama).to receive(:embed).and_return(double(embeddings: [ [ 0.1 ] ]))
+      documents.add('foo')
+      documents.add('bar')
+      expect(documents.each_record).to be_a Enumerator
+      expect(documents.each_record.map(&:text)).to match_array %w[ foo bar ]
+    end
   end
 
   context 'source management' do
@@ -233,7 +259,7 @@ describe Documentrix::Documents do
       allow(documents).to receive(:compute_file_digest).and_return('d1')
       allow(documents.cache).to receive(:compute_file_digest).and_return('d1')
 
-      allow(ollama).to receive(:embed).and_return(double(embeddings: [[0.1]]))
+      allow(ollama).to receive(:embed).and_return(double(embeddings: [ [ 0.1 ] ]))
     end
 
     it 'can check if a source exists' do
