@@ -69,7 +69,7 @@ class Documentrix::Documents::Cache::SQLiteCache
     value     = convert_value_to_record(value)
     digest    = compute_file_digest(value.source)
     embedding = value.embedding.pack("f*")
-    execute(%{BEGIN})
+    execute(%{BEGIN IMMEDIATE})
     execute(%{INSERT INTO embeddings(embedding) VALUES(?)}, [ embedding ])
     embedding_id, = execute(%{ SELECT last_insert_rowid() }).flatten
     execute(%{
