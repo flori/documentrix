@@ -1,5 +1,23 @@
 # Changes
 
+## 2026-06-16 v0.5.0
+
+### Improvements
+
+- Enhanced SQLite concurrency and prevented database locks:
+    - Added `database_busy_timeout` parameter to
+      `Documentrix::Documents#initialize`, defaulting to **5000**ms.
+    - Updated `Documentrix::Documents#connect_cache` to pass the timeout value
+      to the cache backend.
+    - Implemented `busy_timeout` support in
+      `Documentrix::Documents::Cache::SQLiteCache#initialize`.
+    - Configured `@database.busy_handler_timeout` in
+      `Documentrix::Documents::Cache::SQLiteCache#setup_database` to ensure
+      GVL-friendly waiting during lock contention.
+- Prevented immediate `SQLITE_BUSY` errors on writes by updating
+  `Documentrix::Documents::Cache::SQLiteCache#[]=` to use `BEGIN IMMEDIATE`
+  instead of `BEGIN`, avoiding transaction upgrade failures.
+
 ## 2026-05-22 v0.4.0
 
 ### Added
