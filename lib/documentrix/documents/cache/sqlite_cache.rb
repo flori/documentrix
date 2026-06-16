@@ -21,13 +21,15 @@ class Documentrix::Documents::Cache::SQLiteCache
   # @param embedding_length [ Integer ] the length of the embeddings vector
   # @param filename [ String ] the name of the SQLite database file or ':memory:' for in-memory.
   # @param debug [ FalseClass, TrueClass ] whether to enable debugging
+  # @param busy_timeout [ Integer ] the SQLite busy timeout in milliseconds (defaults to 5000)
   #
   # @return [ void ]
-  def initialize(prefix:, embedding_length: 1_024, filename: ':memory:', debug: false)
+  def initialize(prefix:, embedding_length: 1_024, filename: ':memory:', debug: false, busy_timeout: 5000)
     super(prefix:)
     @embedding_length = embedding_length
     @filename         = filename
     @debug            = debug
+    @busy_timeout     = busy_timeout
     setup_database(filename)
   end
 
@@ -170,6 +172,8 @@ class Documentrix::Documents::Cache::SQLiteCache
   # @param source [String] the source identifier used to filter records
   # @param digest [String, nil] the SHA256 hexadecimal digest of the source.
   #   Records matching this digest will be preserved.
+  # @param operator [String] the operator to use for comparison ('=' or '!=').
+  #   Defaults to '='.
   #
   # @return [self] the cache instance for method chaining
   def clear_by_source(source, digest: nil, operator: ?=)
@@ -438,6 +442,7 @@ class Documentrix::Documents::Cache::SQLiteCache
   # @return [ nil ]
   def setup_database(filename)
     @database = SQLite3::Database.new(filename)
+    @database.busy_handler_timeout = @busy_timeout
     @database.enable_load_extension(true)
     SqliteVec.load(@database)
     @database.enable_load_extension(false)

@@ -76,12 +76,13 @@ class Documentrix::Documents
   # @param database_filename [ String ] the filename of the SQLite database to use (defaults to ':memory:')
   # @param redis_url [ String ] the URL of the Redis server to use (defaults to nil)
   # @param debug [ FalseClass, TrueClass ] whether to enable debugging mode (defaults to false)
-  def initialize(ollama:, model:, model_options: nil, collection: nil, embedding_length: 1_024, cache: MemoryCache, database_filename: nil, redis_url: nil, debug: false)
+  # @param database_busy_timeout [ Integer ] the SQLite busy timeout in milliseconds (defaults to 5000)
+  def initialize(ollama:, model:, model_options: nil, collection: nil, embedding_length: 1_024, cache: MemoryCache, database_filename: nil, redis_url: nil, debug: false, database_busy_timeout: 5000)
     collection ||= default_collection
     @ollama, @model, @model_options, @collection, @debug =
       ollama, model, model_options, collection.to_sym, debug
     database_filename ||= ':memory:'
-    @cache = connect_cache(cache, redis_url, embedding_length, database_filename)
+    @cache = connect_cache(cache, redis_url, embedding_length, database_filename, database_busy_timeout)
   end
 
   # The default_collection method returns the default collection name.
@@ -104,7 +105,7 @@ class Documentrix::Documents
   # The prepare_texts method filters out existing texts from the input array
   # and returns the filtered array.
   #
-  # @param texts [ Array ] an array of text strings or #read objects.
+  # @param texts [ Array ] an array of text strings
   #
   # @return [ Array ] the filtered array of text strings
   private def prepare_texts(texts)
@@ -446,9 +447,10 @@ class Documentrix::Documents
   # @param redis_url [String] the URL of the Redis server
   # @param embedding_length [Integer] the length of the embeddings used in the cache
   # @param database_filename [String] the filename of the SQLite database file
+  # @param database_busy_timeout [Integer] the SQLite busy timeout in milliseconds
   #
   # @return [CacheInstance] an instance of the specified cache class
-  def connect_cache(cache_class, redis_url, embedding_length, database_filename)
+  def connect_cache(cache_class, redis_url, embedding_length, database_filename, database_busy_timeout)
     cache = nil
     if (cache_class.instance_method(:redis) rescue nil)
       begin
@@ -465,6 +467,7 @@ class Documentrix::Documents
         prefix:,
         embedding_length:,
         filename: database_filename,
+        busy_timeout: database_busy_timeout,
         debug: @debug
       )
     end
