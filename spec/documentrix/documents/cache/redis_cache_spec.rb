@@ -184,5 +184,29 @@ describe Documentrix::Documents::RedisCache do
       expect(redis).to receive(:get).with("#{prefix}foo").and_return(JSON(source: 's1', digest: 'd1'))
       expect(cache.source_exist?('s1', digest: 'd2')).to be false
     end
+
+    describe '#collections' do
+      it 'extracts unique collection names from keys' do
+        expect(redis).to receive(:scan_each).with(match: "#{prefix}*").and_yield(
+          "#{prefix}col1-foo"
+        ).and_yield(
+          "#{prefix}col1-bar"
+        ).and_yield(
+          "#{prefix}col2-baz"
+        )
+
+        expect(cache.collections(prefix)).to match_array([:col1, :col2])
+      end
+
+      it 'ignores keys that do not follow the collection pattern' do
+        expect(redis).to receive(:scan_each).with(match: "#{prefix}*").and_yield(
+          "#{prefix}valid-foo"
+        ).and_yield(
+          "#{prefix}invalid" # No trailing dash after the name
+        )
+
+        expect(cache.collections(prefix)).to eq [:valid]
+      end
+    end
   end
 end

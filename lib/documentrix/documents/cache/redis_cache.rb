@@ -101,8 +101,23 @@ class Documentrix::Documents::RedisCache
     s
   end
 
-  # The clear_all_with_prefix method removes all key-value pairs associated
-  # with the given prefix from this cache instance.
+  # Returns an array of collection names that match the given prefix.
+  # This is a high-performance override for Redis that only queries keys.
+  #
+  # @param prefix [String] the prefix to search for in collection names
+  # @return [Array<Symbol>] an array of matching collection names
+  def collections(prefix)
+    unique = Set.new
+    redis.scan_each(match: "#{prefix}*") do |key|
+      if key =~ /\A#{prefix}(.+)-/
+        unique << $1.to_sym
+      end
+    end
+    unique.to_a
+  end
+
+  # The clear_all_with_prefix method removes all key-value pairs associated with
+  # the given prefix from this cache instance.
   #
   # @return [Documentrix::Documents::RedisCache] self
   def clear_all_with_prefix

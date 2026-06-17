@@ -108,6 +108,22 @@ class Documentrix::Documents::Cache::SQLiteCache
     result
   end
 
+  # Returns an array of collection names that match the given prefix.
+  # This is a high-performance override for SQLite that only queries keys.
+  #
+  # @param prefix [String] the prefix to search for in collection names
+  # @return [Array<Symbol>] an array of matching collection names
+  def collections(prefix)
+    execute(
+      %{ SELECT DISTINCT key FROM records WHERE key LIKE ? },
+      [ "#{prefix}%" ]
+    ).flatten.each_with_object(Set.new) do |key, set|
+      if key =~ /\A#{prefix}(.+)-/
+        set << $1.to_sym
+      end
+    end.to_a
+  end
+
   # The tags method returns an array of unique tags from the database.
   #
   # @return [Documentrix::Utils::Tags] An instance of Documentrix::Utils::Tags

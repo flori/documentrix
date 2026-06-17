@@ -353,4 +353,29 @@ describe Documentrix::Documents::SQLiteCache do
       expect(cache.find_records(needle)).to eq []
     end
   end
+
+  describe '#collections' do
+    it 'extracts unique collection names matching the prefix' do
+      # Since cache['key'] = val stores as "#{prefix}#{key}",
+      # we can create keys like "col1-foo" to get "test-col1-foo"
+      cache['col1-foo'] = test_value
+      cache['col1-bar'] = test_value
+      cache['col2-baz'] = test_value
+      cache['justprefix'] = test_value # Matches prefix, but not the pattern "prefix(name)-"
+
+      expect(cache.collections('test-')).to match_array([:col1, :col2])
+    end
+
+    it 'returns empty array when no keys match the prefix' do
+      cache['foo'] = test_value
+      expect(cache.collections('nonexistent-')).to eq []
+    end
+
+    it 'returns empty array when keys start with prefix but lack a following hyphen' do
+      # We need a key that starts with "test-" but doesn't have another "-" later.
+      # Because cache['foo'] = val results in "test-foo", this is exactly what happens.
+      cache['foo'] = test_value
+      expect(cache.collections('test-')).to eq []
+    end
+  end
 end

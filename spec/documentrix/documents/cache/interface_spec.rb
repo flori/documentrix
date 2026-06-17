@@ -101,7 +101,7 @@ describe 'Documentrix::Documents::Cache Interface' do
 
       # Common methods from Cache::Common
       expect(cache).to respond_to(:collections)
-      expect(cache.method(:collections).owner).to eq Documentrix::Documents::Cache::Common
+      expect(cache.method(:collections).owner).to eq Documentrix::Documents::RedisCache
 
       expect(cache).to respond_to(:pre)
       expect(cache.method(:pre).owner).to eq Documentrix::Documents::Cache::Common
@@ -167,7 +167,7 @@ describe 'Documentrix::Documents::Cache Interface' do
 
       # Common methods from Cache::Common
       expect(cache).to respond_to(:collections)
-      expect(cache.method(:collections).owner).to eq Documentrix::Documents::Cache::Common
+      expect(cache.method(:collections).owner).to eq Documentrix::Documents::Cache::SQLiteCache
 
       expect(cache).to respond_to(:pre)
       expect(cache.method(:pre).owner).to eq Documentrix::Documents::Cache::Common

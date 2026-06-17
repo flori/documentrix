@@ -23,8 +23,6 @@ describe Documentrix::Documents do
     expect(ollama).to receive(:embed).
       with(model:, input: %w[ foo bar ], options: nil).
       and_return(double(embeddings: [ [ 0.1 ], [ 0.2 ] ]))
-    expect(documents).to receive(:invalidate_collections_cache!).
-      and_call_original
     expect(documents.add(%w[ foo bar ])).to eq documents
     expect(documents.exist?('foo')).to eq true
     expect(documents.exist?('bar')).to eq true
@@ -35,8 +33,6 @@ describe Documentrix::Documents do
     expect(ollama).to receive(:embed).
       with(model:, input: %w[ foo ], options: nil).
       and_return(double(embeddings: [ [ 0.1 ] ]))
-    expect(documents).to receive(:invalidate_collections_cache!).
-      and_call_original
     expect(documents << 'foo').to eq documents
     expect(documents.exist?('foo')).to eq true
     expect(documents.exist?('bar')).to eq false
@@ -127,8 +123,6 @@ describe Documentrix::Documents do
 
     it 'can delete texts' do
       expect(documents << 'foo').to eq documents
-      expect(documents).to receive(:invalidate_collections_cache!).
-        and_call_original
       expect {
         documents.delete('foo')
       }.to change { documents.exist?('foo') }.from(true).to(false)
@@ -142,8 +136,6 @@ describe Documentrix::Documents do
 
     it 'can clear texts' do
       expect(documents << 'foo').to eq documents
-      expect(documents).to receive(:invalidate_collections_cache!).
-        and_call_original
       expect {
         documents.clear
       }.to change { documents.size }.from(1).to(0)
@@ -156,13 +148,9 @@ describe Documentrix::Documents do
       expect(documents.add('foo', tags: %w[ test ])).to eq documents
       expect(documents.add('bar', tags: %w[ test2 ])).to eq documents
       expect(documents.tags.to_a).to eq %w[ test test2 ]
-      expect(documents).to receive(:invalidate_collections_cache!).
-        and_call_original
       expect {
         documents.clear tags: 'test'
       }.to change { documents.size }.from(2).to(1)
-      expect(documents).to receive(:invalidate_collections_cache!).
-        and_call_original
       expect {
         documents.clear tags: :test2
       }.to change { documents.size }.from(1).to(0)
@@ -178,8 +166,6 @@ describe Documentrix::Documents do
 
       expect(documents.size).to eq 3
 
-      expect(documents).to receive(:invalidate_collections_cache!).
-        and_call_original
       documents.source_remove('source1')
 
       expect(documents.size).to eq 1
@@ -196,8 +182,6 @@ describe Documentrix::Documents do
       documents.collection = :foo
       documents << 'foo'
       expect(documents.collections).to eq %i[ default foo ]
-      expect(documents).to receive(:invalidate_collections_cache!).
-        and_call_original
       documents.rename_collection(:bar)
       expect(documents.collection).to eq :bar
       expect(documents.collections).to eq %i[ default bar ]
@@ -211,8 +195,6 @@ describe Documentrix::Documents do
       documents.collection = :bar
       documents << 'foo'
       expect(documents.collections).to eq %i[ default foo bar ]
-      expect(documents).not_to receive(:invalidate_collections_cache!).
-        and_call_original
       expect {
         documents.rename_collection(:foo)
       }.to raise_error(ArgumentError, 'new collection foo already exists!')
@@ -287,8 +269,6 @@ describe Documentrix::Documents do
       documents.add('foo', source: 's1')
 
       expect(ollama).not_to receive(:embed)
-      expect(documents).to receive(:invalidate_collections_cache!).
-        and_call_original
       documents.source_update(['foo'], source: 's1')
       expect(documents.exist?('foo')).to be true
     end
@@ -301,8 +281,6 @@ describe Documentrix::Documents do
       allow(documents.cache).to receive(:compute_file_digest).with('s1').and_return('d2')
 
       expect(ollama).to receive(:embed).once
-      expect(documents).to receive(:invalidate_collections_cache!).
-        at_least(1).and_call_original
       documents.source_update(['bar'], source: 's1')
 
       expect(documents.exist?('bar')).to be true
@@ -311,8 +289,6 @@ describe Documentrix::Documents do
 
     it 'updates the source if it is an URL' do
       expect(ollama).to receive(:embed).once
-      expect(documents).to receive(:invalidate_collections_cache!).
-        and_call_original
       documents.source_update('foo', source: 'https://www.example.com/s1')
       expect(documents.exist?('foo')).to be true
     end
