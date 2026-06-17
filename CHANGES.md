@@ -1,5 +1,25 @@
 # Changes
 
+## 2026-06-17 v0.6.0
+
+### Changed
+
+- Refactored collection discovery to ensure strong consistency across multiple
+  client instances by delegating `Documentrix::Documents#collections` directly
+  to the cache backend.
+- Removed `@collections_cache` and the `invalidate_collections_cache!` method
+  from `lib/documentrix/documents.rb`.
+- Implemented a high-performance `#collections` method in
+  `lib/documentrix/documents/cache/redis_cache.rb` utilizing `scan_each`.
+- Implemented a high-performance `#collections` method in
+  `lib/documentrix/documents/cache/sqlite_cache.rb` using SQL `DISTINCT`.
+- Added specialized unit tests for collection extraction and regex patterns
+  within `spec/documentrix/documents/cache/redis_cache_spec.rb` and
+  `spec/documentrix/documents/cache/sqlite_cache_spec.rb`.
+- Updated `spec/documents_spec.rb` and
+  `spec/documentrix/documents/cache/interface_spec.rb` to remove dependencies
+  on the deleted invalidation method.
+
 ## 2026-06-16 v0.5.0
 
 ### Improvements
