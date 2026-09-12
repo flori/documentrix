@@ -28,13 +28,13 @@ module Documentrix::Documents::Splitters
     #
     # @param ollama [Ollama::Client] the client used for generating embeddings
     # @param model [String] the embedding model name
-    # @param model_options [Hash, nil] optional parameters passed to the embedding model
+    # @param model_options [#to_h] optional parameters passed to the embedding model
     # @param separator [Regexp] the regex used to identify sentence boundaries
     # @param chunk_size [Integer] the maximum character length of a resulting chunk
     # @param force [Boolean] whether to force split chunks that exceed chunk_size (defaults to false)
-    def initialize(ollama:, model:, model_options: nil, separator: DEFAULT_SEPARATOR, chunk_size: 4096, force: false)
+    def initialize(ollama:, model:, model_options: {}, separator: DEFAULT_SEPARATOR, chunk_size: 4096, force: false)
       @ollama, @model, @model_options, @separator, @chunk_size, @force =
-        ollama, model, model_options, separator, chunk_size, force
+        ollama, model, model_options.to_h, separator, chunk_size, force
     end
 
     # Splits the given text into semantic chunks.

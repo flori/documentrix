@@ -69,7 +69,7 @@ class Documentrix::Documents
   #
   # @param ollama [ Ollama::Client ] the client used for embedding
   # @param model [ String ] the name of the model to use for embeddings
-  # @param model_options [ Hash ] optional parameters for the model
+  # @param model_options [ #to_h ] optional parameters for the model
   # @param collection [ Symbol ] the default collection to use (defaults to :default)
   # @param embedding_length [ Integer ] the length of the embeddings (defaults to 1024)
   # @param cache [ Documentrix::Cache ] the cache to use for storing documents (defaults to MemoryCache)
@@ -80,7 +80,7 @@ class Documentrix::Documents
   def initialize(ollama:, model:, model_options: nil, collection: nil, embedding_length: 1_024, cache: MemoryCache, database_filename: nil, redis_url: nil, debug: false, database_busy_timeout: 5000)
     collection ||= default_collection
     @ollama, @model, @model_options, @collection, @debug =
-      ollama, model, model_options, collection.to_sym, debug
+      ollama, model, model_options.to_h, collection.to_sym, debug
     database_filename ||= ':memory:'
     @cache = connect_cache(cache, redis_url, embedding_length, database_filename, database_busy_timeout)
   end
@@ -486,7 +486,7 @@ class Documentrix::Documents
   # @param options [ Hash ] optional parameters for the embedding process
   #
   # @return [ Array<Array<Float>> ] an array containing the embeddings for each input string
-  def fetch_embeddings(model:, input:, options: nil)
+  def fetch_embeddings(model:, input:, options: {})
     @ollama.embed(model:, input:, options:).embeddings
   end
 
