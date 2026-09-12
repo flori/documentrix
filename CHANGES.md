@@ -1,5 +1,20 @@
 # Changes
 
+## 2026-09-12 v0.7.0
+
+*   `Documents#initialize`: Changed `model_options` default contract from
+    `Hash` to `#to_h` in YARD docs and normalized with `.to_h` on assignment to
+    ensure `@model_options` is always a `Hash`
+*   `Documents#fetch_embeddings`: Changed `options` keyword default from `nil`
+    to `{}` to avoid passing `nil` to `Ollama::Client#embed`
+*   `Splitters::Semantic#initialize`: Changed `model_options` default from
+    `nil` to `{}`, normalized with `.to_h` on assignment, and updated YARD type
+    from `[Hash, nil]` to `[#to_h]`
+*   Updated `rubygems_version` in `documentrix.gemspec` from **4.0.10** to
+    **4.0.17**
+*   Raised `gem_hadar` development dependency minimum version from **2.17.1**
+    to **2.18.0**
+
 ## 2026-06-17 v0.6.0
 
 ### Changed
