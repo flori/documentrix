@@ -378,4 +378,62 @@ describe Documentrix::Documents::SQLiteCache do
       expect(cache.collections('test-')).to eq []
     end
   end
+
+  describe '#records' do
+    before do
+      cache['a'] = test_value.merge(text: 'a', source: 's1', tags: %w[ x ])
+      cache['b'] = test_value.merge(text: 'b', source: 's1', tags: %w[ y ])
+      cache['c'] = test_value.merge(text: 'c', source: 's2', tags: %w[ x z ])
+    end
+
+    it 'can filter records by tag' do
+      results = cache.records(tags: 'x')
+      expect(results.map(&:text)).to match_array %w[ a c ]
+    end
+
+    it 'does not match tags by substring' do
+      # 'c' is not a tag, and 'x' should not match 'x'-ish substrings
+      expect(cache.records(tags: 'c').map(&:text)).to be_empty
+    end
+
+    it 'can filter records by source' do
+      results = cache.records(sources: 's1')
+      expect(results.map(&:text)).to match_array %w[ a b ]
+    end
+
+    it 'can filter records by tag and source' do
+      results = cache.records(tags: 'x', sources: 's1')
+      expect(results.map(&:text)).to eq ['a']
+    end
+
+    it 'can filter records by multiple sources (OR)' do
+      results = cache.records(sources: %w[s1 s2])
+      expect(results.map(&:text)).to match_array %w[a b c]
+    end
+
+    it 'can filter records by multiple tags (OR)' do
+      results = cache.records(tags: %w[ y z ])
+      expect(results.map(&:text)).to match_array %w[ b c ]
+    end
+
+    it 'returns all records when no filter given' do
+      results = cache.records
+      expect(results.map(&:text)).to match_array %w[ a b c ]
+    end
+
+    it 'returns records without an embedding' do
+      record = cache.records(tags: 'x').first
+      expect(record).to be_a Documentrix::Documents::Record
+      expect(record.embedding).to be_nil
+    end
+
+    it 'is isolated to the current prefix' do
+      cache2 = cache.dup
+      cache2.prefix = 'other-'
+      cache2['d'] = test_value.merge(text: 'd', source: 's9', tags: %w[ x ])
+
+      expect(cache.records(tags: 'x').map(&:text)).to match_array %w[ a c ]
+      expect(cache2.records(tags: 'x').map(&:text)).to eq ['d']
+    end
+  end
 end

@@ -197,4 +197,45 @@ describe Documentrix::Documents::MemoryCache do
     expect(cache.source_exist?('s1', digest: 'd1', operator: '!=')).to be false
     expect(cache.source_exist?('s1', digest: 'd2', operator: '!=')).to be true
   end
+
+  describe '#records' do
+    before do
+      cache['a'] = Documentrix::Documents::Record[text: 'a', source: 's1', tags: ['x', 'y'], embedding: [0.1]]
+      cache['b'] = Documentrix::Documents::Record[text: 'b', source: 's1', tags: ['y'], embedding: [0.1]]
+      cache['c'] = Documentrix::Documents::Record[text: 'c', source: 's2', tags: ['x'], embedding: [0.1]]
+    end
+
+    it 'filters by a single tag' do
+      result = cache.records(tags: 'x')
+      expect(result.map(&:text)).to match_array(%w[a c])
+    end
+
+    it 'filters by multiple tags with OR semantics' do
+      result = cache.records(tags: %w[x y])
+      expect(result.map(&:text)).to match_array(%w[a b c])
+    end
+
+    it 'filters by source' do
+      result = cache.records(sources: 's2')
+      expect(result.map(&:text)).to eq ['c']
+    end
+
+    it 'filters by tag and source' do
+      result = cache.records(tags: 'x', sources: 's1')
+      expect(result.map(&:text)).to eq ['a']
+    end
+
+    it 'filters by multiple sources (OR)' do
+      result = cache.records(sources: %w[s1 s2])
+      expect(result.map(&:text)).to match_array(%w[a b c])
+    end
+
+    it 'returns all records when no filter is given' do
+      expect(cache.records.map(&:text)).to match_array(%w[a b c])
+    end
+
+    it 'returns empty array for non-matching tag' do
+      expect(cache.records(tags: 'z')).to eq []
+    end
+  end
 end

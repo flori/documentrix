@@ -413,6 +413,17 @@ class Documentrix::Documents
     @cache.each_source.to_a
   end
 
+  # Returns records filtered by tag and/or source, without vector search.
+  #
+  # @param tags [String, Array<String>, nil] tag name(s) to filter by
+  # @param sources [String, Array<String>, nil] source(s) to filter by
+  #   (exact match — a record from *any* given source is returned)
+  #
+  # @return [Array<Documentrix::Documents::Record>] matching records
+  def records(tags: nil, sources: nil)
+    @cache.records(tags:, sources:)
+  end
+
  # The each_record method iterates over all records stored in the cache.
  #
  # @yield [record] The record being iterated over.

@@ -88,6 +88,27 @@ module Documentrix::Documents::Cache::Common
     max_records ? records.take(max_records) : records
   end
 
+  # Returns records filtered by tag and/or source, without vector search.
+  #
+  # At least one of +tags:+ or +sources:+ should be given to avoid a full
+  # collection scan. The +tags:+ parameter accepts a single tag string or an
+  # array of tags (OR semantics — a record matching *any* given tag is
+  # returned).
+  #
+  # @param tags [String, Array<String>, nil] tag name(s) to filter by
+  # @param sources [String, Array<String>, nil] source(s) to filter by
+  #   (exact match — a record from *any* given source is returned)
+  #
+  # @return [Array<Documentrix::Documents::Record>] matching records
+  def records(tags: nil, sources: nil)
+    tags    = Documentrix::Utils::Tags.new(Array(tags)).to_a
+    sources = Array(sources)
+    each.select do |_key, record|
+      (tags.empty? || (tags & record.tags).any?) &&
+        (sources.empty? || sources.include?(record.source))
+    end.transpose.last.to_a
+  end
+
   # Returns a set of unique tags found in the cache records.
   #
   # This method iterates through all records in the cache and collects unique

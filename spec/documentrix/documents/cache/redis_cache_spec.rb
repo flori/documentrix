@@ -185,6 +185,97 @@ describe Documentrix::Documents::RedisCache do
       expect(cache.source_exist?('s1', digest: 'd2')).to be false
     end
 
+    it 'can filter records by tag' do
+      expect(redis).to receive(:scan_each).with(match: "#{prefix}*").
+        and_yield("#{prefix}foo").and_yield("#{prefix}bar")
+      expect(redis).to receive(:get).with("#{prefix}foo").
+        and_return(JSON(text: 'a', tags: ['x']))
+      expect(redis).to receive(:get).with("#{prefix}bar").
+        and_return(JSON(text: 'b', tags: ['y']))
+
+      results = cache.records(tags: 'x')
+      expect(results.map(&:text)).to eq ['a']
+    end
+
+    it 'can filter records by source' do
+      expect(redis).to receive(:scan_each).with(match: "#{prefix}*").
+        and_yield("#{prefix}foo").and_yield("#{prefix}bar")
+      expect(redis).to receive(:get).with("#{prefix}foo").
+        and_return(JSON(text: 'a', source: 's1'))
+      expect(redis).to receive(:get).with("#{prefix}bar").
+        and_return(JSON(text: 'b', source: 's2'))
+
+      results = cache.records(sources: 's1')
+      expect(results.map(&:text)).to eq ['a']
+    end
+
+    it 'can filter records by tag and source' do
+      expect(redis).to receive(:scan_each).with(match: "#{prefix}*").
+        and_yield("#{prefix}foo").and_yield("#{prefix}bar")
+        .and_yield("#{prefix}baz")
+      expect(redis).to receive(:get).with("#{prefix}foo").
+        and_return(JSON(text: 'a', source: 's1', tags: ['x']))
+      expect(redis).to receive(:get).with("#{prefix}bar").
+        and_return(JSON(text: 'b', source: 's1', tags: ['y']))
+      expect(redis).to receive(:get).with("#{prefix}baz").
+        and_return(JSON(text: 'c', source: 's2', tags: ['x']))
+
+      results = cache.records(tags: 'x', sources: 's1')
+      expect(results.map(&:text)).to eq ['a']
+    end
+
+    it 'can filter records by multiple sources' do
+      expect(redis).to receive(:scan_each).with(match: "#{prefix}*").
+        and_yield("#{prefix}foo").and_yield("#{prefix}bar")
+        .and_yield("#{prefix}baz")
+      expect(redis).to receive(:get).with("#{prefix}foo").
+        and_return(JSON(text: 'a', source: 's1'))
+      expect(redis).to receive(:get).with("#{prefix}bar").
+        and_return(JSON(text: 'b', source: 's2'))
+      expect(redis).to receive(:get).with("#{prefix}baz").
+        and_return(JSON(text: 'c', source: 's3'))
+
+      results = cache.records(sources: %w[ s1 s2 ])
+      expect(results.map(&:text)).to match_array %w[ a b ]
+    end
+
+    it 'can filter records by multiple tags (OR)' do
+      expect(redis).to receive(:scan_each).with(match: "#{prefix}*").
+        and_yield("#{prefix}foo").and_yield("#{prefix}bar")
+        .and_yield("#{prefix}baz")
+      expect(redis).to receive(:get).with("#{prefix}foo").
+        and_return(JSON(text: 'a', tags: ['x']))
+      expect(redis).to receive(:get).with("#{prefix}bar").
+        and_return(JSON(text: 'b', tags: ['y']))
+      expect(redis).to receive(:get).with("#{prefix}baz").
+        and_return(JSON(text: 'c', tags: ['z']))
+
+      results = cache.records(tags: %w[ x z ])
+      expect(results.map(&:text)).to match_array %w[ a c ]
+    end
+
+    it 'returns all records when no filter given' do
+      expect(redis).to receive(:scan_each).with(match: "#{prefix}*").
+        and_yield("#{prefix}foo").and_yield("#{prefix}bar")
+      expect(redis).to receive(:get).with("#{prefix}foo").
+        and_return(JSON(text: 'a'))
+      expect(redis).to receive(:get).with("#{prefix}bar").
+        and_return(JSON(text: 'b'))
+
+      results = cache.records
+      expect(results.map(&:text)).to match_array %w[ a b ]
+    end
+
+    it 'only returns records under current prefix' do
+      expect(redis).to receive(:scan_each).with(match: "#{prefix}*").
+        and_yield("#{prefix}foo")
+      expect(redis).to receive(:get).with("#{prefix}foo").
+        and_return(JSON(text: 'a'))
+
+      results = cache.records
+      expect(results.map(&:text)).to eq ['a']
+    end
+
     describe '#collections' do
       it 'extracts unique collection names from keys' do
         expect(redis).to receive(:scan_each).with(match: "#{prefix}*").and_yield(

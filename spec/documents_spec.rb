@@ -234,6 +234,49 @@ describe Documentrix::Documents do
       expect(documents.each_record).to be_a Enumerator
       expect(documents.each_record.map(&:text)).to match_array %w[ foo bar ]
     end
+
+    it 'can retrieve records filtered by tag' do
+      allow(ollama).to receive(:embed).and_return(double(embeddings: [ [ 0.1 ] ]))
+      documents.add('foo', tags: %w[ test ])
+      documents.add('bar', tags: %w[ other ])
+      expect(documents.records(tags: 'test').map(&:text)).to eq %w[ foo ]
+    end
+
+    it 'can retrieve records matching any of multiple tags' do
+      allow(ollama).to receive(:embed).and_return(double(embeddings: [ [ 0.1 ] ]))
+      documents.add('foo', tags: %w[ a ])
+      documents.add('bar', tags: %w[ b ])
+      documents.add('baz', tags: %w[ c ])
+      expect(documents.records(tags: %w[ a c ]).map(&:text)).to match_array(%w[ foo baz ])
+    end
+
+    it 'can retrieve records filtered by source' do
+      allow(ollama).to receive(:embed).and_return(double(embeddings: [ [ 0.1 ] ]))
+      documents.add('foo', source: 's1')
+      documents.add('bar', source: 's2')
+      expect(documents.records(sources: 's1').map(&:text)).to eq %w[ foo ]
+    end
+
+    it 'can retrieve records filtered by tag and source' do
+      allow(ollama).to receive(:embed).and_return(double(embeddings: [ [ 0.1 ] ]))
+      documents.add('foo', tags: %w[ test ], source: 's1')
+      documents.add('bar', tags: %w[ test ], source: 's2')
+      expect(documents.records(tags: 'test', sources: 's1').map(&:text)).to eq %w[ foo ]
+    end
+
+    it 'can retrieve records filtered by multiple sources (OR)' do
+      allow(ollama).to receive(:embed).and_return(double(embeddings: [ [ 0.1 ] ]))
+      documents.add('foo', source: 's1')
+      documents.add('bar', source: 's2')
+      documents.add('baz', source: 's3')
+      expect(documents.records(sources: %w[ s1 s3 ]).map(&:text)).to match_array(%w[ foo baz ])
+    end
+
+    it 'returns empty records when no records match' do
+      allow(ollama).to receive(:embed).and_return(double(embeddings: [ [ 0.1 ] ]))
+      documents.add('foo', tags: %w[ test ], source: 's1')
+      expect(documents.records(sources: 's2')).to eq []
+    end
   end
 
   context 'source management' do

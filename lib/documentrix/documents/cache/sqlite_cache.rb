@@ -341,6 +341,50 @@ class Documentrix::Documents::Cache::SQLiteCache
     vector
   end
 
+  # Returns records filtered by tag and/or source, without vector search.
+  #
+  # This is a high-performance override for SQLite that uses `json_each`
+  # for precise array-element matching, avoiding the embedding JOIN and
+  # the Ruby-side post-filter needed by the `LIKE '%tag%'` substring hack.
+  #
+  # @param tags [String, Array<String>, nil] tag name(s) to filter by
+  #   (OR semantics — a record matching any given tag is returned)
+  # @param sources [String, Array<String>, nil] source(s) to filter by
+  #   (exact match — a record from *any* given source is returned)
+  #
+  # @return [Array<Documentrix::Documents::Record>] matching records
+  def records(tags: nil, sources: nil)
+    tags    = Documentrix::Utils::Tags.new(tags).to_a
+    sources = Array(sources)
+
+    where = ['key LIKE ?']
+    args  = [ start_with_prefix ]
+
+    unless tags.empty?
+      where << "EXISTS (SELECT 1 FROM json_each(tags) " \
+        "WHERE json_each.value IN (%s)) " % (%w[ ? ] * tags.size).join(?,)
+      args.concat(tags)
+    end
+
+    unless sources.empty?
+      where << "source IN (%s) " % (%w[ ? ] * sources.size).join(?,)
+      args.concat(sources)
+    end
+
+    where = where.map { '(%s)' % _1 }
+
+    execute(
+      "SELECT key, text, source, tags, digest " \
+      "FROM records WHERE #{where.join(' AND ')}",
+      args
+    ).map do |key, text, source, tags, digest|
+      convert_value_to_record(
+        key: unpre(key), text:, source:,
+        tags: JSON(tags.to_s).to_a, digest:
+      )
+    end
+  end
+
   # The find_records_for_tags method filters records based on the provided tags.
   #
   # @param tags [ Array ] an array of tag names
