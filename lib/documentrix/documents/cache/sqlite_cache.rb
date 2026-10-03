@@ -362,7 +362,7 @@ class Documentrix::Documents::Cache::SQLiteCache
     }, [ start_with_prefix ])
     if tags_filter
       records = records.select { |key, tags, embedding_id|
-        (tags_filter & JSON(tags.to_s).to_a).size >= 1
+        (tags_filter & JSON(tags.to_s).to_a).any?
       }
     end
     records

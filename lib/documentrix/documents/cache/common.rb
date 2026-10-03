@@ -70,7 +70,7 @@ module Documentrix::Documents::Cache::Common
     tags    = Documentrix::Utils::Tags.new(Array(tags)).to_a
     records = self
     if tags.present?
-      records = records.select { |_key, record| (tags & record.tags).size >= 1 }
+      records = records.select { |_key, record| (tags & record.tags).any? }
     end
 
     needle_norm = norm(needle)
@@ -112,7 +112,7 @@ module Documentrix::Documents::Cache::Common
   # @return [self] self
   def clear_for_tags(tags)
     each do |key, record|
-      if (tags & record.tags.to_a).size >= 1
+      if (tags & record.tags.to_a).any?
         delete(unpre(key))
       end
     end
