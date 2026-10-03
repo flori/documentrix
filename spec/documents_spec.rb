@@ -21,7 +21,7 @@ describe Documentrix::Documents do
 
   it 'texts can be added to it' do
     expect(ollama).to receive(:embed).
-      with(model:, input: %w[ foo bar ], options: nil).
+      with(model:, input: %w[ foo bar ], options: {}).
       and_return(double(embeddings: [ [ 0.1 ], [ 0.2 ] ]))
     expect(documents.add(%w[ foo bar ])).to eq documents
     expect(documents.exist?('foo')).to eq true
@@ -31,7 +31,7 @@ describe Documentrix::Documents do
 
   it 'a text can be added to it' do
     expect(ollama).to receive(:embed).
-      with(model:, input: %w[ foo ], options: nil).
+      with(model:, input: %w[ foo ], options: {}).
       and_return(double(embeddings: [ [ 0.1 ] ]))
     expect(documents << 'foo').to eq documents
     expect(documents.exist?('foo')).to eq true
@@ -41,7 +41,7 @@ describe Documentrix::Documents do
 
   it 'a text with can be added to it' do
     expect(ollama).to receive(:embed).
-      with(model:, input: %w[ foo ], options: nil).
+      with(model:, input: %w[ foo ], options: {}).
       and_return(double(embeddings: [ [ 0.1 ] ]))
     expect_any_instance_of(Documentrix::Utils::Tags).to\
       receive(:add).with('bar.rb', source: '/foo/bar.rb')
@@ -53,11 +53,11 @@ describe Documentrix::Documents do
 
   it 'can find strings' do
     expect(ollama).to receive(:embed).
-      with(model:, input: [ 'foo' ], options: nil).
+      with(model:, input: [ 'foo' ], options: {}).
       and_return(double(embeddings: [ [ 0.1 ] ]))
     expect(documents << 'foo').to eq documents
     expect(ollama).to receive(:embed).
-      with(model:, input: 'foo', options: nil).
+      with(model:, input: 'foo', options: {}).
       and_return(double(embeddings: [ [ 0.1 ] ]))
     records = documents.find('foo')
     expect(records).to eq [
@@ -68,16 +68,16 @@ describe Documentrix::Documents do
 
   it 'can find only tagged strings' do
     expect(ollama).to receive(:embed).
-      with(model:, input: [ 'foo' ], options: nil).
+      with(model:, input: [ 'foo' ], options: {}).
       and_return(double(embeddings: [ [ 0.1 ] ]))
     expect(documents.add('foo', tags: %w[ test ])).to eq documents
     expect(ollama).to receive(:embed).
-      with(model:, input: 'foo', options: nil).
+      with(model:, input: 'foo', options: {}).
       and_return(double(embeddings: [ [ 0.1 ] ]))
     records = documents.find('foo', tags: %w[ nix ])
     expect(records).to eq []
     expect(ollama).to receive(:embed).
-      with(model:, input: 'foo', options: nil).
+      with(model:, input: 'foo', options: {}).
       and_return(double(embeddings: [ [ 0.1 ] ]))
     records = documents.find('foo', tags: %w[ test ])
     expect(records).to eq [
@@ -88,15 +88,15 @@ describe Documentrix::Documents do
 
   it 'can find strings conditionally' do
     expect(ollama).to receive(:embed).
-      with(model:, input: [ 'foobar' ], options: nil).
+      with(model:, input: [ 'foobar' ], options: {}).
       and_return(double(embeddings: [ [ 0.01 ] ]))
     expect(ollama).to receive(:embed).
-      with(model:, input: [ 'foo' ], options: nil).
+      with(model:, input: [ 'foo' ], options: {}).
       and_return(double(embeddings: [ [ 0.1 ] ]))
     expect(documents << 'foobar').to eq documents
     expect(documents << 'foo').to eq documents
     expect(ollama).to receive(:embed).at_least(:once).
-      with(model:, input: 'foo', options: nil).
+      with(model:, input: 'foo', options: {}).
       and_return(double(embeddings: [ [ 0.1 ] ]))
     records = documents.find_where('foo', text_count: 1)
     expect(records).to eq [
@@ -117,7 +117,7 @@ describe Documentrix::Documents do
   context 'it uses cache' do
     before do
       allow(ollama).to receive(:embed).
-        with(model:, input: %w[ foo ], options: nil).
+        with(model:, input: %w[ foo ], options: {}).
         and_return(double(embeddings: [ [ 0.1 ] ]))
     end
 
@@ -143,7 +143,7 @@ describe Documentrix::Documents do
 
     it 'can clear texts with tags' do
       expect(ollama).to receive(:embed).
-        with(model:, input: %w[ bar ], options: nil).
+        with(model:, input: %w[ bar ], options: {}).
         and_return(double(embeddings: [ [ 0.1 ] ]))
       expect(documents.add('foo', tags: %w[ test ])).to eq documents
       expect(documents.add('bar', tags: %w[ test2 ])).to eq documents
