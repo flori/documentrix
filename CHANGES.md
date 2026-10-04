@@ -1,5 +1,25 @@
 # Changes
 
+## 2026-10-04 v0.8.0
+
+* Added `records(tags:, sources:)` lookup method:
+  * New `records(tags:, sources:)` facade in `documents.rb` delegating to
+    `@cache`.
+  * `Common#records` fallback implementation using `each.select` with
+    tag-intersection and source-membership filters, projected via
+    `transpose.last.to_a`.
+  * `SQLiteCache#records` override using `json_each` + `IN` for precise
+    array-element tag matching and `source IN` for multi-source filtering,
+    skipping the embedding JOIN.
+  * Added comprehensive specs for the new method across `documents_spec.rb`,
+    `memory_cache_spec.rb`, `redis_cache_spec.rb`, `sqlite_cache_spec.rb`, and
+    `interface_spec.rb`.
+* Upgraded Valkey image from **9.0.1-alpine** to **9.1.2-alpine** in
+  `docker-compose.yml`.
+* Refactored tag intersection checks in cache to use `any?`.
+* Updated `ollama` embed call expectations in `spec/documents_spec.rb` to use
+  `options: {}` instead of `options: nil`.
+
 ## 2026-09-12 v0.7.0
 
 *   `Documents#initialize`: Changed `model_options` default contract from
