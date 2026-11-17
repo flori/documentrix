@@ -162,8 +162,9 @@ class Documentrix::Documents
       end
       infobar.progress by: batch.size
     end
-    infobar.newline
     self
+  ensure
+    infobar.finish
   end
   alias << add
 

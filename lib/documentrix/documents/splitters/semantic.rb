@@ -66,7 +66,6 @@ module Documentrix::Documents::Splitters
         infobar.progress by: batch.size
         e
       end
-      infobar.newline
       embeddings.size < 2 and return sentences
       distances = embeddings.each_cons(2).map do |a, b|
         1.0 - cosine_similarity(a:, b:)
@@ -103,6 +102,8 @@ module Documentrix::Documents::Splitters
       end
       result.concat(force_split(current_text))
       result
+    ensure
+      infobar.finish
     end
 
     private
