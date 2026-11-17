@@ -17,19 +17,19 @@ Gem::Specification.new do |s|
   s.licenses = ["MIT".freeze]
   s.rdoc_options = ["--title".freeze, "Documentrix - Ruby library for embedding vector database".freeze, "--main".freeze, "README.md".freeze]
   s.required_ruby_version = Gem::Requirement.new(">= 3.1".freeze)
-  s.rubygems_version = "4.0.20".freeze
+  s.rubygems_version = "4.0.24".freeze
   s.summary = "Ruby library for embedding vector database".freeze
   s.test_files = ["spec/documentrix/documents/cache/interface_spec.rb".freeze, "spec/documentrix/documents/cache/memory_cache_spec.rb".freeze, "spec/documentrix/documents/cache/redis_cache_spec.rb".freeze, "spec/documentrix/documents/cache/sqlite_cache_spec.rb".freeze, "spec/documentrix/documents/splitters/character_spec.rb".freeze, "spec/documentrix/documents/splitters/semantic_spec.rb".freeze, "spec/documents_spec.rb".freeze, "spec/spec_helper.rb".freeze, "spec/utils/colorize_texts_spec.rb".freeze, "spec/utils/digests_spec.rb".freeze, "spec/utils/tags_spec.rb".freeze]
 
   s.specification_version = 4
 
-  s.add_development_dependency(%q<gem_hadar>.freeze, [">= 2.18.0".freeze])
+  s.add_development_dependency(%q<gem_hadar>.freeze, [">= 2.21.0".freeze])
   s.add_development_dependency(%q<all_images>.freeze, ["~> 0.12".freeze])
   s.add_development_dependency(%q<rspec>.freeze, ["~> 3.2".freeze])
   s.add_development_dependency(%q<kramdown>.freeze, ["~> 2.0".freeze])
   s.add_development_dependency(%q<debug>.freeze, [">= 0".freeze])
   s.add_development_dependency(%q<simplecov>.freeze, [">= 0".freeze])
-  s.add_runtime_dependency(%q<infobar>.freeze, ["~> 0.9".freeze])
+  s.add_runtime_dependency(%q<infobar>.freeze, ["~> 0.16".freeze])
   s.add_runtime_dependency(%q<json>.freeze, ["~> 2.0".freeze])
   s.add_runtime_dependency(%q<tins>.freeze, ["~> 1.34".freeze])
   s.add_runtime_dependency(%q<sqlite-vec>.freeze, [">= 0.1.9".freeze])
