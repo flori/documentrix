@@ -1,5 +1,19 @@
 # Changes
 
+## 2026-11-18 v0.9.0
+
+### Improvements
+
+- Widen the `json` runtime dependency constraint from `~> 2.0` to `>= 2.0`, `<
+  4` to support `json` 3.x.
+- Add `require 'json/generic_object'` to `records.rb` to ensure
+  `JSON::GenericObject` availability when using `json` 3.x.
+
+### Build & CI
+
+- Add `json-generic_object` (`>= 0.2.0`) as a runtime dependency.
+- Bump the `gem_hadar` development dependency to `>= 2.24.1`.
+
 ## 2026-11-17 v0.8.1
 
 ### Improvements
