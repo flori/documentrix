@@ -1,9 +1,9 @@
 # -*- encoding: utf-8 -*-
-# stub: documentrix 0.8.1 ruby lib
+# stub: documentrix 0.9.0 ruby lib
 
 Gem::Specification.new do |s|
   s.name = "documentrix".freeze
-  s.version = "0.8.1".freeze
+  s.version = "0.9.0".freeze
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0".freeze) if s.respond_to? :required_rubygems_version=
   s.require_paths = ["lib".freeze]
@@ -23,14 +23,15 @@ Gem::Specification.new do |s|
 
   s.specification_version = 4
 
-  s.add_development_dependency(%q<gem_hadar>.freeze, [">= 2.22.1".freeze])
+  s.add_development_dependency(%q<gem_hadar>.freeze, [">= 2.24.1".freeze])
   s.add_development_dependency(%q<all_images>.freeze, ["~> 0.12".freeze])
   s.add_development_dependency(%q<rspec>.freeze, ["~> 3.2".freeze])
   s.add_development_dependency(%q<kramdown>.freeze, ["~> 2.0".freeze])
   s.add_development_dependency(%q<debug>.freeze, [">= 0".freeze])
   s.add_development_dependency(%q<simplecov>.freeze, [">= 0".freeze])
   s.add_runtime_dependency(%q<infobar>.freeze, ["~> 0.16".freeze])
-  s.add_runtime_dependency(%q<json>.freeze, ["~> 2.0".freeze])
+  s.add_runtime_dependency(%q<json>.freeze, [">= 2.0".freeze, "< 4".freeze])
+  s.add_runtime_dependency(%q<json-generic_object>.freeze, [">= 0.2.0".freeze])
   s.add_runtime_dependency(%q<tins>.freeze, ["~> 1.34".freeze])
   s.add_runtime_dependency(%q<sqlite-vec>.freeze, [">= 0.1.9".freeze])
   s.add_runtime_dependency(%q<sqlite3>.freeze, ["~> 2.0".freeze, ">= 2.0.1".freeze])

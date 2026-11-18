@@ -1,5 +1,3 @@
-# vim: set filetype=ruby et sw=2 ts=2:
-
 require 'gem_hadar'
 
 GemHadar do
@@ -30,15 +28,16 @@ GemHadar do
 
   required_ruby_version  '>= 3.1'
 
-  dependency 'infobar',         '~> 0.16'
-  dependency 'json',            '~> 2.0'
-  dependency 'tins',            '~> 1.34'
-  dependency 'sqlite-vec',      '>= 0.1.9'
-  dependency 'sqlite3',         '~> 2.0', '>= 2.0.1'
-  dependency 'kramdown-ansi',   '~> 0.0', '>= 0.0.1'
-  dependency 'numo-narray-alt', '~> 0.9'
-  dependency 'redis',           '~> 5.0'
-  dependency 'more_math',       '~> 1.1'
+  dependency 'infobar',             '~> 0.16'
+  dependency 'json',                '>= 2.0', '< 4'
+  dependency 'json-generic_object', '>= 0.2.0'
+  dependency 'tins',                '~> 1.34'
+  dependency 'sqlite-vec',          '>= 0.1.9'
+  dependency 'sqlite3',             '~> 2.0', '>= 2.0.1'
+  dependency 'kramdown-ansi',       '~> 0.0', '>= 0.0.1'
+  dependency 'numo-narray-alt',     '~> 0.9'
+  dependency 'redis',               '~> 5.0'
+  dependency 'more_math',           '~> 1.1'
 
   development_dependency 'all_images', '~> 0.12'
   development_dependency 'rspec',      '~> 3.2'

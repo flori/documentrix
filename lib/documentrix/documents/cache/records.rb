@@ -1,3 +1,5 @@
+require 'json/generic_object'
+
 # Module for cache record definitions used in Documentrix document caching.
 #
 # This module provides the Record class and RedisFullEach module for managing
